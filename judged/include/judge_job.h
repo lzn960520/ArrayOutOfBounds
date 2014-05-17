@@ -3,9 +3,9 @@
 
 struct judge_job {
 	pthread_t judge_thread;
-	pid_t compile_pid;
+	pid_t compile_pid, run_pid;
 	unsigned int pid;
-	unsigned long source_file, out_file;
+	unsigned long source_file, exec_file, input_file, output_file;
 	enum {
 		LANGUAGE_C,
 		LANGUAGE_CPP
