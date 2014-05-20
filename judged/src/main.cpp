@@ -13,6 +13,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <string.h>
+#include <grp.h>
 using namespace std;
 
 void *listen_thread(void *);
@@ -23,6 +24,7 @@ pthread_mutex_t work_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t work_num;
 deque<judge_job*> work_queue;
 uid_t safe_uid;
+gid_t safe_gid;
 
 #define MAX_JUDGE_THREAD 1
 #define DPRINTF printf
@@ -38,15 +40,25 @@ int main() {
 	testjob->language = judge_job::LANGUAGE_C;
 	work_queue.push_back(testjob);
 	sem_post(&work_num);
+
 	struct passwd *userinfo = getpwnam("safe_judge");
 	if (userinfo == NULL) {
 		fprintf(stderr, "No safe_judge user\n");
 		return -1;
 	}
 	safe_uid = userinfo->pw_uid;
+
+	struct group *groupinfo = getgrnam("safe_judge");
+	if (groupinfo == NULL) {
+		fprintf(stderr, "No safe_judge group\n");
+		return -1;
+	}
+	safe_gid = groupinfo->gr_gid;
+
 	pthread_create(&listen_tid, NULL, listen_thread, NULL);
 	for (int i = 0; i < MAX_JUDGE_THREAD; i++)
 		pthread_create(&judge_tids[i], NULL, judge_thread, NULL);
+
 	cin.get();
 
 	void *tmp;

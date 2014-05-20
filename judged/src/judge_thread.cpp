@@ -11,12 +11,14 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <dlfcn.h>
+#include "fileop.h"
 using namespace std;
 
 extern pthread_mutex_t work_queue_mutex;
 extern deque<judge_job*> work_queue;
 extern sem_t work_num;
 extern uid_t safe_uid;
+extern gid_t safe_gid;
 
 #define CMD_BUF_SIZE 256
 #define DPRINTF printf
@@ -90,8 +92,10 @@ typedef double (*judge_func)(FILE *, FILE *);
 }
 static void cleanup(void *) {
 	char cmd[CMD_BUF_SIZE];
-	snprintf(cmd, CMD_BUF_SIZE, "rm -R -f /tmp/judged.%lu", pthread_self());
-	system(cmd);
+	snprintf(cmd, CMD_BUF_SIZE, "rm -r -f /tmp/judged.%lu", pthread_self());
+	if (system(cmd)) {
+		fprintf(stderr, "Error when clean up in thread %lu", pthread_self());
+	}
 	DPRINTF("Clean up in judge thread %lu\n", pthread_self());
 }
 void *judge_thread(void *) {
@@ -99,12 +103,13 @@ void *judge_thread(void *) {
 
 	void *compile_result;
 	pthread_t tid = pthread_self();
-	char cmd[CMD_BUF_SIZE];
+	char cmd[CMD_BUF_SIZE * 2];
 
 	pthread_cleanup_push(cleanup, 0);
 		prepare_compile_env()
 		prepare_run_env()
 
+		DPRINTF("Ready to judge in thread %lu\n", tid);
 		for (;;) {
 			pthread_testcancel();
 			sem_wait(&work_num);
@@ -118,13 +123,18 @@ void *judge_thread(void *) {
 			switch (my_job->language) {
 			case judge_job::LANGUAGE_C:
 				// copy source file
-				snprintf(cmd, CMD_BUF_SIZE,
-						"cp %s /tmp/judged.%lu/gccroot/%lu && chown safe_judge /tmp/judged.%lu/gccroot/%lu",
-						my_job->sourcefile, tid, my_job->source_file, tid,
+				snprintf(cmd, CMD_BUF_SIZE, "/tmp/judged.%lu/gccroot/%lu", tid,
 						my_job->source_file);
-				if (system(cmd)) {
+				if (copy_file(cmd, my_job->sourcefile)) {
 					fprintf(stderr,
-							"Error when copy source file in thread %lu\n", tid);
+							"Error when copy source file in thread %lu, errno %d\n",
+							tid, errno);
+					break;
+				}
+				if (chown_file(cmd, safe_uid, safe_gid)) {
+					fprintf(stderr,
+							"Error when chown source file in thread %lu, errno %d\n",
+							tid, errno);
 					break;
 				}
 
@@ -148,6 +158,12 @@ void *judge_thread(void *) {
 					if (chroot(cmd)) {
 						fprintf(stderr,
 								"Error when chroot for compile in thread %lu, errno %d\n",
+								tid, errno);
+						exit(1);
+					}
+					if (setgid(safe_gid)) {
+						fprintf(stderr,
+								"Error when setgid for compile in thread %lu, errno %d\n",
 								tid, errno);
 						exit(1);
 					}
@@ -202,27 +218,50 @@ void *judge_thread(void *) {
 					delete_sourcefile("gccroot")
 				}
 
-				// move outfile
-				snprintf(cmd, CMD_BUF_SIZE,
-						"mv /tmp/judged.%lu/gccroot/%lu /tmp/judged.%lu/runroot/",
-						tid, my_job->exec_file, tid);
-				if (system(cmd)) {
-					fprintf(stderr, "Error when move out file in thread %lu\n",
+				// move execfile
+				snprintf(cmd, CMD_BUF_SIZE, "/tmp/judged.%lu/gccroot/%lu", tid,
+						my_job->exec_file);
+				snprintf(cmd + CMD_BUF_SIZE, CMD_BUF_SIZE,
+						"/tmp/judged.%lu/runroot/%lu", tid, my_job->exec_file);
+				if (move_file(cmd + CMD_BUF_SIZE, cmd)) {
+					fprintf(stderr, "Error when move exec file in thread %lu\n",
 							tid);
 					delete_execfile("gccroot")
 					break;
 				}
 
+				// chmod execfile
+				if (chmod_file(cmd + CMD_BUF_SIZE, 0555)) {
+					fprintf(stderr, "Error when move exec file in thread %lu\n",
+							tid);
+					delete_execfile("runroot")
+					break;
+				}
+
 				// test
 				{
+					// load comparer
 					void *judgeso = dlopen("./strict.so", RTLD_LAZY);
 					judge_func judger;
 					judger = (judge_func) dlsym(judgeso, "judge");
+
 					unsigned int testcase_num = 1;
 					for (int i = 0; i < testcase_num; i++) {
 						my_job->input_file = rand() * RAND_MAX + rand();
 						my_job->output_file = rand() * RAND_MAX + rand();
+
 						// copy test input
+						snprintf(cmd, CMD_BUF_SIZE,
+								"/tmp/judged.%lu/runroot/%lu", tid,
+								my_job->input_file);
+						if (copy_file(cmd,
+								"/home/lzn/innovenus/judged/test.in")) {
+							fprintf(stderr,
+									"Error when copy input file in thread %lu, errno %d\n",
+									tid, errno);
+							delete_execfile("runroot")
+							break;
+						}
 
 						// run
 						my_job->run_pid = fork();
@@ -231,7 +270,8 @@ void *judge_thread(void *) {
 									"Error when fork for run in thread %lu, errno %d\n",
 									tid, errno);
 							delete_inputfile()
-							continue;
+							delete_execfile("runroot")
+							break;
 						} else if (my_job->run_pid == 0) {
 							if (setuid(0)) {
 								fprintf(stderr,
@@ -247,6 +287,12 @@ void *judge_thread(void *) {
 										tid, errno);
 								exit(1);
 							}
+							if (setgid(safe_gid)) {
+								fprintf(stderr,
+										"Error when setgid for run in thread %lu, errno %d\n",
+										tid, errno);
+								exit(1);
+							}
 							if (setuid(safe_uid)) {
 								fprintf(stderr,
 										"Error when setuid for run in thread %lu, errno %d\n",
@@ -255,12 +301,17 @@ void *judge_thread(void *) {
 							}
 
 							snprintf(cmd, CMD_BUF_SIZE, "/%lu",
+									my_job->input_file);
+							int inputfile = open(cmd, O_RDONLY);
+							dup2(inputfile, 0);
+							snprintf(cmd, CMD_BUF_SIZE, "/%lu",
 									my_job->output_file);
 							int outputfile = open(cmd,
 							O_CREAT | O_WRONLY | O_EXCL);
 							dup2(outputfile, 1);
 							dup2(outputfile, 2);
-							snprintf(cmd, CMD_BUF_SIZE, "/%lu", my_job->exec_file);
+							snprintf(cmd, CMD_BUF_SIZE, "/%lu",
+									my_job->exec_file);
 							execl(cmd, cmd, NULL);
 							fprintf(stderr,
 									"Error when exec for run in thread %lu, errno %d\n",
@@ -274,6 +325,8 @@ void *judge_thread(void *) {
 										"Error when wait program exit in thread %lu, errno %d\n",
 										tid, errno);
 								delete_inputfile()
+								delete_execfile("runroot")
+								delete_outputfile()
 								break;
 							}
 							if (!WIFEXITED(status)) {
@@ -281,9 +334,12 @@ void *judge_thread(void *) {
 										"Runtime error in thread %lu, status 0x%X\n",
 										tid, status);
 								delete_inputfile()
+								delete_execfile("runroot")
+								delete_outputfile()
 								break;
 							}
 							delete_inputfile()
+							delete_execfile("runroot")
 						}
 
 						// judge
@@ -291,8 +347,11 @@ void *judge_thread(void *) {
 								"/tmp/judged.%lu/runroot/%lu", tid,
 								my_job->output_file);
 						FILE *outfile = fopen(cmd, "r");
-						printf("%lf\n", judger(outfile, NULL));
+						FILE *ansfile = fopen(
+								"/home/lzn/innovenus/judged/test.ans", "r");
+						printf("%lf\n", judger(outfile, ansfile));
 						fclose(outfile);
+						fclose(ansfile);
 						delete_outputfile()
 					}
 				}
