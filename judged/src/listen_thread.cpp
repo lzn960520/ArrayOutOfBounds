@@ -10,6 +10,7 @@
 #include "judge_job.h"
 #include <deque>
 #include <semaphore.h>
+#include "fileop.h"
 using namespace std;
 
 #define SOCK_PATH "/tmp/judged.sock"
@@ -64,6 +65,7 @@ void *listen_thread(void *) {
 			unlink(SOCK_PATH);
 			return (void *) 1;
 		}
+		chmod_file(SOCK_PATH, 0666);
 		if (listen(listen_fd, SOMAXCONN)) {
 			perror("Cannot listen socket\n");
 			close(listen_fd);
@@ -80,19 +82,28 @@ void *listen_thread(void *) {
 					&addr_len);
 			if (client_fd < 0) {
 				perror("Cannot accept socket\n");
-				close(listen_fd);
-				unlink(SOCK_PATH);
-				return (void *) 1;
+				continue;
 			}
 			clientf = fdopen(client_fd, "r");
+			if (clientf == NULL) {
+				perror("Cannot create socket stream\n");
+				close(client_fd);
+				client_fd = 0;
+				continue;
+			}
 			judge_job *newjob = new judge_job;
-			fscanf(clientf, "%u %s %u", &(newjob->language), newjob->sourcefile,
-					&(newjob->pid));
-			fclose(clientf);
-			clientf = NULL;
-			close(client_fd);
-			client_fd = 0;
+			if (fscanf(clientf, "%u %s %u", &(newjob->language), newjob->sourcefile,
+					&(newjob->pid)) < 2) {
+				perror("Wrong request format\n");
+				fclose(clientf);
+				clientf = NULL;
+				close(client_fd);
+				client_fd = 0;
+				continue;
+			}
+			newjob->clientf = fdopen(client_fd, "w");
 			pthread_mutex_lock(&work_queue_mutex);
+			clientf = NULL;
 			work_queue.push_back(newjob);
 			pthread_mutex_unlock(&work_queue_mutex);
 			sem_post(&work_num);

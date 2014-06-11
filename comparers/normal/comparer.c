@@ -25,12 +25,12 @@ double judge(FILE *outfile, FILE *ansfile) {
 	size_t outlength = 0, anslength = 0, anssize = 0, outsize = 0;
 
 	anslength = getline(&ansline, &anssize, ansfile);
-	ansline[anslength - 1] = 0;
 	outlength = getline(&outline, &outsize, outfile);
-	outline[outlength - 1] = 0;
 	while ((anslength != -1) && (outlength != -1)) {
-		ansline[anslength - 1] = 0;
-		outline[outlength - 1] = 0;
+		if (ansline[anslength - 1] == '\n')
+			ansline[anslength - 1] = 0;
+		if (outline[outlength - 1] == '\n')
+			outline[outlength - 1] = 0;
 		if (my_strcmp(ansline, outline)) {
 			if (outline)
 				free(outline);
@@ -42,7 +42,8 @@ double judge(FILE *outfile, FILE *ansfile) {
 		outlength = getline(&outline, &outsize, outfile);
 	}
 	while (anslength != -1) {
-		ansline[anslength - 1] = 0;
+		if (ansline[anslength - 1] == '\n')
+			ansline[anslength - 1] = 0;
 		if (my_strcmp(ansline, "")) {
 			if (outline)
 				free(outline);
@@ -53,7 +54,8 @@ double judge(FILE *outfile, FILE *ansfile) {
 		anslength = getline(&ansline, &anssize, ansfile);
 	}
 	while (outlength != -1) {
-		outline[outlength - 1] = 0;
+		if (outline[outlength - 1] == '\n')
+			outline[outlength - 1] = 0;
 		if (my_strcmp(outline, "")) {
 			if (outline)
 				free(outline);

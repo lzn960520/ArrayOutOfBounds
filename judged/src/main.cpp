@@ -34,12 +34,6 @@ int main() {
 	pthread_t judge_tids[MAX_JUDGE_THREAD];
 	srand(time(0));
 	sem_init(&work_num, 0, 0);
-	struct judge_job *testjob = new judge_job;
-	testjob->pid = 0;
-	strncpy(testjob->sourcefile, "/home/lzn/innovenus/judged/test.c", 256);
-	testjob->language = judge_job::LANGUAGE_C;
-	work_queue.push_back(testjob);
-	sem_post(&work_num);
 
 	struct passwd *userinfo = getpwnam("safe_judge");
 	if (userinfo == NULL) {
