@@ -145,7 +145,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
           if (err){
             console.log(err);
           }else{
-            collection.find({pid:int(data.pid)}).toArray(function(err,docs){
+            collection.find({pid:Number(data.pid)}).toArray(function(err,docs){
               console.log(docs);
               var thisproblem=docs[0];
               var description=thisproblem.description;
