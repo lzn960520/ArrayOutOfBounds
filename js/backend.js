@@ -1,4 +1,4 @@
-var port = 8005;
+var port = 805;
 var backend=function(){
 	var self = this;
 	var socket = new WebSocket("ws://"+location.hostname+":"+port);
