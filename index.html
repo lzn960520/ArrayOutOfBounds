@@ -1,0 +1,395 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Out of Bounds</title>
+<link rel="stylesheet" href="fonts/ubuntumono/font.css">
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+<link rel="stylesheet" href="css/index.css">
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.cookie.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/bootstrap-datetimepicker.min.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/backend.js"></script>
+<script src="js/ace/ace.js"></script>
+<script>
+	var onactive = {
+		"welcome": function() {
+			backend.getContests();
+		},
+		"problems": function() {
+			backend.getProblems();
+		},
+		"contests": function() {
+			backend.getContests();
+		}
+	};
+	function toggleSignin() {
+		$("#login-div").fadeToggle(300);
+	}
+	function toggleSignup() {
+		$("#reg-div").fadeToggle(300);
+	}
+	function enableTab(value) {
+		$("#tab-"+value).show();
+	}
+	function disableTab(value) {
+		$("#tab-"+value).hide();
+	}
+	function addTab(id, name) {
+		$("#left").append(
+			"<div class='tab' id='tab-"+id+"'>"+
+				name+
+				"<span class='tab-close-btn'></span>"+
+			"</div>");
+	}
+	function addProblemDiv(pid, callback) {
+		backend.getProblem(pid, function(data) {
+			$("#main #body").append(
+				"<div class='ui' id='ui-p"+pid+"'>"+
+					"<div class='module'>"+
+						"<h3>"+data.name+"</h3>"+
+						"<div style='border-top:1px solid #e5e5e5'>"+
+							"<h4>Description</h4>"+
+							"<p>" + data.description + "</p>"+
+						"</div>"+
+						"<div style='border-top:1px solid #e5e5e5'>"+
+							"<h4>Sample input</h4>"+
+							"<p>" + data.simple_input + "</p>"+
+						"</div>"+
+						"<div style='border-top:1px solid #e5e5e5'>"+
+							"<h4>Sample output</h4>"+
+							"<p>" + data.simple_output + "</p>"+
+						"</div>"+
+					"</div>"+
+				"</div>");
+			callback();
+		});
+	}
+	function switchNAV(value) {
+		if (value==0){
+			$("#header #before-login").css("display","inline-block");
+			$("#header #after-login").css("display","none");
+		} else {
+			$("#header #before-login").css("display","none");
+			$("#header #after-login").css("display","inline-block");
+		}
+	}
+	function switchGUI(value) {
+		$(".ui").hide();
+		$(".tab").removeClass("selected");
+		$("#ui-"+value).show();
+		if (onactive[value])
+			onactive[value]();
+		$("#tab-"+value).addClass("selected");
+	}
+	function deleteGUI(value) {
+		if ($("#tab-"+value).hasClass("selected"))
+			switchGUI("welcome");
+		$("#ui-"+value).remove();
+		$("#tab-"+value).remove();
+	}
+	function do_login() {
+		backend.login($("#login-div #username").val(), $("#login-div #password").val());
+		$("#login-div").fadeOut(300);
+		return false;
+	}
+	function do_reg() {
+		if ($("#reg-div #password").val() != $("#reg-div #password2").val()) {
+			popup_noti("The passwords you entered must be the same");
+			return false;
+		}
+		backend.reg($("#reg-div #username").val(), $("#reg-div #password").val());
+		$("#reg-div").fadeOut(300);
+		return false;
+	};
+	function do_add_problem() {
+		backend.create_problem(
+			$("#add-problem-modal #name").val(),
+			$("#add-problem-modal #desc").val(),
+			$("#add-problem-modal #input").val(),
+			$("#add-problem-modal #output").val());
+		$('#add-problem-modal .userinput').val('');
+	}
+	function do_add_contest() {
+		backend.create_contest(
+			$("#add-contest-modal #name").val(),
+			$("#add-contest-modal #begintime").datetimepicker('getDate'),
+			$("#add-contest-modal #endtime").datetimepicker('getDate'),
+			$("#add-contest-modal #problems").val().replace(/\s*/g,"").split(','));
+		$('#add-contest-modal .userinput').val('');
+	}
+	$(document).ready(function() {
+		$(".popup").hide();
+		$(".ui").hide();
+		$(".tab").hide();
+		enableTab("welcome");
+		enableTab("problems");
+		enableTab("contests");
+		switchGUI("welcome");
+		$("body").delegate('.problem-row','click',function(e) {
+			var pid=e.currentTarget.getAttribute("pid");
+			if ($("#tab-p"+pid).length != 0)
+				switchGUI("p"+pid);
+			else {
+				var name=e.currentTarget.getAttribute("name");
+				addTab("p"+pid,name);
+				addProblemDiv(pid, function(){
+					switchGUI("p"+pid);
+				});
+			}
+		});
+		$("body").delegate(".tab",'click',function(e){
+			switchGUI(e.currentTarget.id.substring(4));
+		});
+		$("body").delegate(".tab-close-btn","click",function(e) {
+			deleteGUI(e.currentTarget.parentElement.id.substring(4));
+			e.stopPropagation();
+		});
+		$("#login-div").click(function(e) {
+			e.stopPropagation();
+		});
+		$("#reg-div").click(function(e) {
+			e.stopPropagation();
+		});
+		$("#signin").click(function(e) {
+			toggleSignin();
+			$("#login-div #username").focus();
+			$("#reg-div").fadeOut(300);
+			e.stopPropagation(); 
+		});
+		$("#signup").click(function(e) {
+			toggleSignup();
+			$("#reg-div #username").focus();
+			$("#login-div").fadeOut(300);
+			e.stopPropagation(); 
+		});
+		$("#logout").click(function() {
+			$.removeCookie("username");
+			popup_noti("Logout successful");
+			switchGUI("welcome");
+			switchNAV(0);
+		});
+		$(document).click(function(e) {
+			$("#login-div").fadeOut(300);
+			$("#reg-div").fadeOut(300);
+		});
+		$("#reg-div #password2").keydown(function(e) {
+			if (e.keyCode == 13)
+				$("#reg-btn").click();
+		});
+		if ($.cookie("username") != null) {
+			switchNAV(1);
+			$("#after-login #username").html($.cookie("username"));
+		}
+		var editor = ace.edit("submit-editor");
+		editor.setTheme("ace/theme/twilight");
+		editor.getSession().setMode("ace/mode/c_cpp");
+	});
+</script>
+</head>
+
+<body style="margin:0">
+<div class="modal fade" id="add-problem-modal" tabindex="-1" role="dialog" aria-labelledby="label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="label">Add problem</h4>
+      </div>
+      <div class="modal-body" id="body">
+      	<div class="form-group">
+	      <label for="name">Name</label>
+	      <input id="name" class="userinput form-control" type="text">
+      	</div>
+      	<div class="form-group">
+	      <label for="desc">Description</label>
+	      <textarea id="desc" style="height:100px" class="userinput form-control" type="text"></textarea>
+      	</div>
+      	<div class="form-group">
+	      <label for="input">Input</label>
+	      <textarea id="input" style="height:100px" class="userinput form-control" type="text"></textarea>
+      	</div>
+      	<div class="form-group">
+	      <label for="output">Output</label>
+	      <textarea id="output" style="height:100px" class="userinput form-control" type="text"></textarea>
+      	</div>
+      </div>
+      <div class="modal-footer">
+      	<button type="button" onclick="$('#add-problem-modal .userinput').val('');" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button type="button" onclick="do_add_problem();" class="btn btn-success" data-dismiss="modal">Submit</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div class="modal fade" id="add-contest-modal" tabindex="-1" role="dialog" aria-labelledby="label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="label">Add contest</h4>
+      </div>
+      <div class="modal-body" id="body">
+      	<div class="form-group">
+	      <label for="name">Name</label>
+	      <input id="name" class="userinput form-control" type="text">
+      	</div>
+      	<div class="form-group" style="width:48%;display:inline-block">
+	      <label for="begintime">Begin time</label>
+	      <div class="userinput" id="begintime"></div>
+	      <script>
+	      	$("#begintime").datetimepicker({
+	      		format: "yyyy-mm-dd hh:ii",
+	      		autoclose: true,
+	      		startDate: new Date(),
+	      	});
+	      	$("#begintime .datetimepicker").css("margin","0 auto");
+	      </script>
+      	</div>
+      	<div class="form-group" style="width:48%;float:right;display:inline-block">
+      	  <label style="margin:0 auto" for="endtime">End time</label>
+      	  <div class="userinput" id="endtime"></div>
+      	  <script>
+	        $("#endtime").datetimepicker({
+	      	  format: "yyyy-mm-dd hh:ii",
+	      	  autoclose: true,
+	        });
+	        $("#endtime .datetimepicker").css("margin","0 auto");
+	      </script>
+	    </div>
+      	<div class="form-group">
+	      <label for="problems">Problems</label>
+	      <input id="problems" class="userinput form-control" type="text">
+      	</div>
+      </div>
+      <div class="modal-footer">
+      	<button type="button" onclick="$('#add-contest-modal .userinput').val('');" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button type="button" onclick="do_add_contest();" class="btn btn-success" data-dismiss="modal">Submit</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div id="screen">
+    <div id="header">
+        <div style="display:inline-block;height:50px;float:right;margin-right:1%">
+            <div style="width:200px;padding:8px 0;height:50px;display:inline-block">
+                <input class="form-control" style="background:url(img/search.png) #fff no-repeat right;background-origin:content-box" type="text" placeholder="Search problem">
+            </div>
+            <div style="position:static;margin-left:10px" id="before-login" class="btn-group logintool">
+                <button type="button" class="btn btn-default" id="signin">Sign in</button>
+                <button type="button" class="btn btn-default" id="signup">Sign up</button>
+            </div>
+            <div style="margin-left:10px;display:none" id="after-login" class="logintool">
+            	<div id="username" style="display:inline-block" onselectstart="javascript:return false;"></div>
+                <button type="button" class="btn btn-danger" id="logout">Log out</button>
+            </div>
+        </div>
+        <div id="logo">
+            <div onselectstart="javascript:return false;">OutOfBounds</div>
+        </div>
+    </div>
+    <div id="left" class="tab-list" onselectstart="javascript:return false;">
+        <div class="tab selected" id="tab-welcome">Welcome</div>
+        <div class="tab" id="tab-problems">Problems</div>
+        <div class="tab" id="tab-contests">Contests</div>
+        <div class="tab" id="tab-problem">Problem</div>
+        <div class="tab" id="tab-submit">Submit</div>
+    </div>
+    <div id="main">
+        <div id="body">
+        	<div class="ui" id="ui-welcome">
+            	<strong style="font-size:40px"><em>
+                	Welcome to Out of Bounds
+                </em></strong>
+                <div id="newest-contests-div" class="module">
+                    <h3>Newest Contests</h3>
+                    <table id="newest-contests-table" style="margin-top:40px" class="table table-striped">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Begin time</th>
+                            <th>End time</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="ui" id="ui-problems">
+            	<div id="problems-div" class="module">
+					<h3>Problems</h3>
+	                <div style="margin-top: 30px">
+	                	<button class="btn btn-default" id="add-problem-btn" style="margin-left:90%;width:10%" data-toggle="modal" data-target="#add-problem-modal">Add</button>
+	                    <table id="problems-table" class="table table-striped">
+	                    	<tr>
+	                            <th>ID</th>
+	                            <th>Name</th>
+	                        </tr>
+	                    </table>
+					</div>
+                </div>
+            </div>
+            <div class="ui" id="ui-contests">
+            	<div id="contests-div" class="module">
+            		<h3>Contests</h3>
+            		<div style="margin-top:30px">
+	                	<button class="btn btn-default" id="add-contest-btn" style="margin-left:90%;width:10%" data-toggle="modal" data-target="#add-contest-modal">Add</button>
+	                    <table id="contests-table" class="table table-striped">
+	                    	<tr>
+	                            <th>ID</th>
+	                            <th>Name</th>
+	                            <th>Begin time</th>
+	                            <th>End time</th>
+	                        </tr>
+	                    </table>
+                   </div>
+                </div>
+            </div>
+            <div class="ui" id="ui-submit">
+            	<div id="submit-div" class="module">
+            		<h3>Submit</h3>
+            		<div style="position: relative;height:500px;margin-bottom:20px">
+	                    <div id="submit-editor">f</div>
+                    </div>
+                    <div>
+                    	<button style="margin-left:90%;width:10%" class="btn btn-success">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="popup popup-form" id="login-div">
+            <form id="login-form" onsubmit="return do_login();">
+                <div>
+                    <label class="control-label">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Username" autocomplete="on">
+                </div>
+                <div>
+                    <label class="control-label">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password" autocomplete="on">
+                </div>
+                <div>
+                    <button type="submit" id="login-btn" class="btn btn-default">Sign in</button>
+                </div>
+            </form>
+        </div>
+        <div class="popup popup-form" id="reg-div">
+        	<form id="reg-form" onsubmit="return do_reg();">
+                <div>
+                    <label class="control-label">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Username">
+                </div>
+                <div>
+                    <label class="control-label">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password">
+                </div>
+                <div>
+                    <label class="control-label">Confirm</label>
+                    <input type="password" class="form-control" id="password2" placeholder="Password">
+                </div>
+                <div>
+                    <button type="submit" id="reg-btn" class="btn btn-default">Sign up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
