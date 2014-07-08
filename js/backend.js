@@ -1,11 +1,10 @@
 var port = 805;
 var backend=function(){
 	var self = this;
-	var socket = new WebSocket("ws://"+location.hostname+":"+port);
 	var ready = false;
 	var queue = [];
 	var working = false;
-	socket.onopen = function() {
+	function onopen() {
 		ready = true;
 		socket.onmessage = function(event) {
 			var data = JSON.parse(event.data);
@@ -52,6 +51,8 @@ var backend=function(){
 			work();
 		}
 	}
+	var socket = new WebSocket("ws://"+location.hostname+":"+port);
+	socket.onopen = onopen;
 	function work() {
 		if (queue.length==0) {
 			working = false;
@@ -71,6 +72,10 @@ var backend=function(){
 			work();
 	}
 	function waitForReady(callback) {
+		if (socket.readyState == socket.CLOSED) {
+			socket = new WebSocket("ws://"+location.hostname+":"+port);
+			socket.onopen = onopen;
+		}
 		if (ready)
 			callback();
 		else
@@ -156,6 +161,17 @@ var backend=function(){
 					"begin":begin,
 					"end":end,
 					"problems":pids
+				})
+			);
+		});
+	}
+	self.submit_code = function(username, code, pid) {
+		waitForReady(function() {
+			send(
+				JSON.stringify({"type":"submit_code",
+					"username":username,
+					"code":code,
+					"pid": pid
 				})
 			);
 		});

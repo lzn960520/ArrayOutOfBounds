@@ -15,6 +15,7 @@
 <script src="js/backend.js"></script>
 <script src="js/ace/ace.js"></script>
 <script>
+	var editor_session = {};
 	var onactive = {
 		"welcome": function() {
 			backend.getContests();
@@ -49,7 +50,7 @@
 		backend.getProblem(pid, function(data) {
 			$("#main #body").append(
 				"<div class='ui' id='ui-p"+pid+"'>"+
-					"<div class='module'>"+
+					"<div id='desc' class='module'>"+
 						"<h3>"+data.name+"</h3>"+
 						"<div style='border-top:1px solid #e5e5e5'>"+
 							"<h4>Description</h4>"+
@@ -63,8 +64,24 @@
 							"<h4>Sample output</h4>"+
 							"<p>" + data.simple_output + "</p>"+
 						"</div>"+
+						"<button class='btn btn-success show-submit-problem-btn' pid='" + pid + "' style='margin-left:90%;width:10%'>Submit</button>"+
+					"</div>"+
+					"<div id='submit' class='module'>"+
+						"<h3>Submit</h3>"+
+            			"<div style='position: relative;height:500px;margin-bottom:20px'>"+
+	                    	"<div id='submit-editor'></div>"+
+                    	"</div>"+
+                    	"<div>"+
+							"<button style='margin-left:77%;width:10%' class='btn btn-danger cancel-submit-problem-btn'>Cancel</button>"+
+                    		"<button style='margin-left:3%;width:10%' class='btn btn-success confirm-submit-problem-btn' pid='" + pid + "'>Submit</button>"+
+                   		"</div>"+
 					"</div>"+
 				"</div>");
+			$("#main #body #ui-p"+pid+" #submit").hide();
+			var editor = ace.edit($("#main #body #ui-p"+pid+" #submit #submit-editor").get(0));
+			editor.setTheme("ace/theme/twilight");
+			editor.getSession().setMode("ace/mode/c_cpp");
+			editor_session[pid] = editor;
 			callback();
 		});
 	}
@@ -148,6 +165,28 @@
 			deleteGUI(e.currentTarget.parentElement.id.substring(4));
 			e.stopPropagation();
 		});
+		$("body").delegate(".show-submit-problem-btn", "click", function(e) {
+			var pid = e.currentTarget.getAttribute("pid");
+			var desc_div = $("#main #body #ui-p"+pid+" #desc");
+			var submit_div = $("#main #body #ui-p"+pid+" #submit");
+			desc_div.hide();
+			submit_div.show();
+		});
+		$("body").delegate(".cancel-submit-problem-btn", "click", function(e) {
+			var pid = e.currentTarget.getAttribute("pid");
+			var desc_div = $("#main #body #ui-p"+pid+" #desc");
+			var submit_div = $("#main #body #ui-p"+pid+" #submit");
+			desc_div.show();
+			submit_div.hide();
+		});
+		$("body").delegate(".confirm-submit-problem-btn", "click", function(e) {
+			var pid = e.currentTarget.getAttribute("pid");
+			var desc_div = $("#main #body #ui-p"+pid+" #desc");
+			var submit_div = $("#main #body #ui-p"+pid+" #submit");
+			desc_div.show();
+			submit_div.hide();
+			backend.submit_code($.cookie("username"), editor_session[pid].getValue(), pid);
+		});
 		$("#login-div").click(function(e) {
 			e.stopPropagation();
 		});
@@ -184,9 +223,6 @@
 			switchNAV(1);
 			$("#after-login #username").html($.cookie("username"));
 		}
-		var editor = ace.edit("submit-editor");
-		editor.setTheme("ace/theme/twilight");
-		editor.getSession().setMode("ace/mode/c_cpp");
 	});
 </script>
 </head>
@@ -341,17 +377,6 @@
 	                        </tr>
 	                    </table>
                    </div>
-                </div>
-            </div>
-            <div class="ui" id="ui-submit">
-            	<div id="submit-div" class="module">
-            		<h3>Submit</h3>
-            		<div style="position: relative;height:500px;margin-bottom:20px">
-	                    <div id="submit-editor">f</div>
-                    </div>
-                    <div>
-                    	<button style="margin-left:90%;width:10%" class="btn btn-success">Submit</button>
-                    </div>
                 </div>
             </div>
         </div>
