@@ -188,7 +188,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 }
               }
               i=i+1;
-              for (i;i<data;i++) {
+              for (i;i<data.length;i++) {
                 result+=data[i];
               }
               db.collection('results',{safe:true},function(err,collection){
