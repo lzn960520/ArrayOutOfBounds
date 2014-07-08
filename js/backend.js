@@ -44,6 +44,12 @@ var backend=function(){
 				if (i<9)
 					$("#newest-contests-table").html(content);
 				$("#contests-table").html(content);
+			} else if (data.type == "showresult") {
+				if (data.score == 100) {
+					popup_noti("<span style='color:green'>P"+pid+": Accepted</span>");
+				} else {
+					popup_noti("<span style='color:yellow'>P"+pid+": "+data.result+" "+data.score+"/100</span>");
+				}
 			}
 			if (queue[0].callback)
 				queue[0].callback(data);

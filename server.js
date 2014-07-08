@@ -219,7 +219,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 }            
               });
               ws.send(JSON.stringify({
-                "type": "showresults",
+                "type": "showresult",
                 "username": username,
                 "pid":pid,
                 "score":score,
