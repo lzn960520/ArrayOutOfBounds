@@ -7,9 +7,43 @@ function check_password(password){
   var len=password.length;
   if (len<6) return false;else return true;
 }
-
+var crypto = require('crypto');
+var os = require('os');
+function generateRandom() {
+  return crypto.createHash('md5').update(((os.uptime()+os.totalmem())*(os.freemem()+10007)).toString()).digest('hex');
+}
+var express = require('express');
 var fs = require('fs');
 var net = require('net');
+
+var webapp = express();
+var bodyParser = require('body-parser');
+webapp.use(bodyParser.urlencoded({extended:false}));
+webapp.use(require('connect-multiparty')());
+webapp.use(express.static(__dirname));
+webapp.post("/upload", function(req, res) {
+  var session = req.body.session || generateRandom();
+  fs.mkdir(__dirname + "/tmp/" + session, function(err) {
+    var files = req.files.upload;
+    var processed = 0;
+    files.forEach(function(file) {
+    	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
+    	  fs.readFile(file.path, function(err, data) {
+    	  	if (err) throw err;
+    	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
+    	      processed++;
+    	  	  if (processed == files.length)
+    	  	    res.end(JSON.stringify({"session":session}));
+    	  	  if (err) throw err;
+    	  	});
+    	  })
+    	}
+    });
+  });
+})
+var server = webapp.listen(8000, function() {
+  console.log('Express listening on port %d', 8000);
+})
 //Connect to my database.
 var mongodb = require('mongodb');
 var server = new mongodb.Server('localhost',27017,{auto_reconnect:true});
@@ -19,7 +53,7 @@ db.open(function(err,db){
     console.log('connect to the database sucessfully');
   } else {
     console.log(err);
-  }   
+  }
 });
 
 //Set the websocket
@@ -377,7 +411,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
 	  
 	  
 	  }else if (data.type=="create_contest") {
-		//Contest ÃüÃû¹æ·¶£ºÈÕÆÚ¸ñÊ½ yyyy mm dd hh mm          pids¸ñÊ½£ºxxx xxx xxx xxx         
+		//Contest ï¿½ï¿½ï¿½ï¿½æ·¶ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½Ê½ yyyy mm dd hh mm          pidsï¿½ï¿½Ê½ï¿½ï¿½xxx xxx xxx xxx         
         db.collection('contests',{safe:true},function(err,collection){
           console.log("Insert a new contest into the database");                
           if (err){
