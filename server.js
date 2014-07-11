@@ -256,58 +256,57 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
         fs.writeFile(filename, data.code, function(err) {
           if (err)
             throw err;
-          var sock = net.connect("/tmp/judged.sock", function() {
-            sock.setEncoding("utf8");
-            sock.on('data', function(data) {
-              var score=0;
-              var result="";
-              var i=0;
-              for (i;i<data.length;i++){
-                if (data[i]!=' ') {
-                  score=score*10+parseInt(data[i]);
-                } else {
-                  break;
-                }
-              }
-              i=i+1;
-              for (i;i<data.length;i++) {
-                result+=data[i];
-              }
-              db.collection('results',{safe:true},function(err,collection){              
-                if (err) {
-                  console.log(err);
-                } else {
-                  collection.find({}).toArray(function(err,docs) {
-                    if (err) {
-                      cosole.log(err);
-                    } else {
-                      var newrid=docs.length+1;    
-                      collection.insert(
-                        { "pid":pid,
-                          "username":username,
-                          "rid":newrid,
-                          "score":score,
-                          "result":result
-                        },
-                        {safe:true},
-                        function(err) {
-                          if (err)
-                            console.log(err);
-                        }
-                      );
-                    }
-                  });
-                }            
-              });
+          db.collection("problems",{safe:true},function(err,collection){
+            if (err){
+              console.log(err);
               ws.send(JSON.stringify({
-                "type": "showresult",
-                "username": username,
-                "pid":pid,
-                "score":score,
-                "result":result
+                "type": "error_message",
+                "content": "Couldn't open database"
               }));
-            });
-            sock.write("0 " + filename + " " + data.pid + "\n");
+            } else {
+              collection.find({pid:Number(data.pid)}).toArray(function(err,docs){
+                if ((err) || (docs.length == 0)) {
+                  console.log(err);
+                  ws.send(JSONJSON.stringify({
+                    "type": "error_message",
+                    "content": "Couldn't read the problem"
+                  }));
+                } else {
+                  var sock = net.connect("/tmp/judged.sock", function() {
+                    sock.setEncoding("utf8");
+                    sock.on('data', function(data) {
+                      var score=0;
+                      var result="";
+                      var i=0;
+                      for (i;i<data.length;i++){
+                        if (data[i]!=' ') {
+                          score=score*10+parseInt(data[i]);
+                        } else {
+                          break;
+                        }
+                      }
+                      i=i+1;
+                      for (i;i<data.length;i++) {
+                        result+=data[i];
+                      }
+                      ws.send(JSON.stringify({
+                        "type": "showresult",
+                        "username": username,
+                        "pid":pid,
+                        "score":score,
+                        "result":result
+                      }));
+                    });
+                    sock.write(
+                      "0 " + // language
+                      filename+" " + // sourcefile
+                      __dirname+"/problem/p"+data.pid+" " + // judge_dir
+                      docs[0].num_case + // num_case
+                      "\n");
+                  });
+                }
+              });
+            }
           });
         });
       } else if (data.type == "create_problem") {
