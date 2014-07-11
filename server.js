@@ -71,8 +71,10 @@ webapp.post("/uploadcasefile", function(req, res) {
     	  	    });
     	  	  if (err) throw err;
     	  	});
+    	  	fs.unlink(file.path);
     	  })
     	} else {
+    	  fs.unlink(file.path);
     	  processed++;
     	  if (processed == files.length)
           find_missing_casefile(session, Number(req.body.max_case), function(missing) {
