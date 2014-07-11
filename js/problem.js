@@ -85,10 +85,8 @@ $(function() {
     },
     progress: function (e, data) {
       if (data.loaded == data.total) {
-        $("#add-problem-modal #upload-btn").removeClass('disabled');
         $("#add-problem-modal #upload-info").text('Upload test cases...');
       } else {
-        $("#add-problem-modal #upload-btn").addClass('disabled');
         $("#add-problem-modal #upload-info").text((Math.round(data.loaded / data.total * 1000)/10)+"%");
       }
     }
