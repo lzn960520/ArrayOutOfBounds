@@ -10,33 +10,77 @@ function check_password(password){
 var crypto = require('crypto');
 var os = require('os');
 function generateRandom() {
-  return crypto.createHash('md5').update(((os.uptime()+os.totalmem())*(os.freemem()+10007)).toString()).digest('hex');
+  return crypto.createHash('md5').update(((os.uptime()+os.totalmem())*(os.freemem()+10007)).toString()+(new Date().toISOString())).digest('hex');
 }
 var express = require('express');
 var fs = require('fs');
 var net = require('net');
 
+function find_missing_casefile(dir, max_case, callback) {
+  if (!callback)
+    return;
+  fs.readdir("tmp/" + dir, function(err, files) {
+    if (err) {
+      console.log(err);
+      callback(0);
+      return;
+    }
+    files = files.join('\n');
+    var ans = [];
+    for (var i = 1; i <= max_case; i++) {
+      if (!files.match(i+'.in'))
+        ans.push(i+'.in');
+      if (!files.match(i+'.out'))
+        ans.push(i+'.out');
+    }
+    callback(ans);
+  })
+}
+function isArray(o) {
+  return Object.prototype.toString.call(o) === '[object Array]';
+}
 var webapp = express();
 var bodyParser = require('body-parser');
 webapp.use(bodyParser.urlencoded({extended:false}));
 webapp.use(require('connect-multiparty')());
 webapp.use(express.static(__dirname));
-webapp.post("/upload", function(req, res) {
+webapp.post("/uploadcasefile", function(req, res) {
   var session = req.body.session || generateRandom();
-  fs.mkdir(__dirname + "/tmp/" + session, function(err) {
+  fs.mkdir(__dirname + "/tmp/" + session + "/", function(err) {
     var files = req.files.upload;
+    if (!isArray(files))
+      files = [files];
     var processed = 0;
     files.forEach(function(file) {
-    	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
+    	if (file.name.match(/[1-9][0-9]*.(in|ans)/)) {
     	  fs.readFile(file.path, function(err, data) {
     	  	if (err) throw err;
+    	  	file.name = file.name.match(/([1-9][0-9]*.(in|ans))/)[0];
     	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
     	      processed++;
     	  	  if (processed == files.length)
-    	  	    res.end(JSON.stringify({"session":session}));
+    	  	    find_missing_casefile(session, Number(req.body.max_case), function(missing) {
+    	  	      res.end(
+                  JSON.stringify({
+                    "missing": missing,
+                    "session": session
+                  })
+                );
+    	  	    });
     	  	  if (err) throw err;
     	  	});
     	  })
+    	} else {
+    	  processed++;
+    	  if (processed == files.length)
+          find_missing_casefile(session, Number(req.body.max_case), function(missing) {
+            res.end(
+              JSON.stringify({
+                "missing": missing, 
+                "session": session
+              })
+            );
+          });
     	}
     });
   });
@@ -75,16 +119,12 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
     ws.on('message', function(message) {
       console.log(message);
       var data = JSON.parse(message);
-      if (data.type=="check_login"){
-        console.log("check login");
-        db.collection('users',{safe:true},function(err,collection){
+      if (data.type == "check_login"){
+        db.collection('users',{safe:true},function(err, collection){
           if (err){
             console.log(err);
           } else {
-            console.log("try to find whether user has existed");
             collection.find({username:data.username}).toArray(function(err,docs){
-              console.log("find");
-              console.log(docs);
               var have_user=docs;
               if (have_user.length==0){
                 ws.send(JSON.stringify({
@@ -108,11 +148,11 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             });
           }
         });
-      } else if (data.type=="registration") {
-        var username=data.username;
-        var password=data.password;
-        var confirm_password=data.confirm_password;
-        var have_user=null;
+      } else if (data.type == "registration") {
+        var username = data.username;
+        var password = data.password;
+        var confirm_password = data.confirm_password;
+        var have_user = null;
         db.collection('users',{safe:true},function(err,collection){
           if (err) {
             console.log(err);
@@ -138,7 +178,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 db.collection('users',{safe:true},function(err,collection){
                   if (err){
                     console.log(err);
-                  }else{
+                  } else {
                     collection.insert({"username":data.username,"password":data.password},{safe:true}, function(err, result) {});
                     ws.send(JSON.stringify({
                       "type": "registration_successfully",
@@ -150,14 +190,12 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             }); 
           }
         });
-      } else if (data.type=="getProblems") {
+      } else if (data.type == "getProblems") {
         db.collection("problems",{safe:true},function(err,collection){
           if (err){
             console.log(err);
           } else {
             collection.find({}).toArray(function(err,docs){
-              console.log("find the following problems");
-              console.log(docs);
               var len=docs.length;
               var i=0;
               var name=new Array(len);
@@ -174,13 +212,12 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             });
           }
         });
-      } else if (data.type=="getProblem") {
+      } else if (data.type == "getProblem") {
         db.collection("problems",{safe:true},function(err,collection){
           if (err){
             console.log(err);
           }else{
             collection.find({pid:Number(data.pid)}).toArray(function(err,docs){
-              console.log(docs);
               var thisproblem=docs[0];
               var description=thisproblem.description;
               var simple_input=thisproblem.input;
@@ -198,9 +235,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             });
           }
         });      
-      } else if (data.type=="submit_code") {
-        console.log(data.code);
-        console.log(data.pid);
+      } else if (data.type == "submit_code") {
         var pid=data.pid;
         var username=data.username;
         var filename = "/tmp/" + Math.floor(Math.random()*1000007);
@@ -210,7 +245,6 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
           var sock = net.connect("/tmp/judged.sock", function() {
             sock.setEncoding("utf8");
             sock.on('data', function(data) {
-              console.log(data);
               var score=0;
               var result="";
               var i=0;
@@ -225,8 +259,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
               for (i;i<data.length;i++) {
                 result+=data[i];
               }
-              db.collection('results',{safe:true},function(err,collection){
-                console.log("Insert a new result into the database");               
+              db.collection('results',{safe:true},function(err,collection){              
                 if (err) {
                   console.log(err);
                 } else {
@@ -263,9 +296,8 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             sock.write("0 " + filename + " " + data.pid + "\n");
           });
         });
-      } else if (data.type=="create_problem") {
-        db.collection('problems',{safe:true},function(err,collection){
-          console.log("Insert a new problem into the database");                
+      } else if (data.type == "create_problem") {
+        db.collection('problems',{safe:true},function(err,collection){             
           if (err){
             console.log(err);
           } else {
@@ -273,55 +305,63 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
               if (err) {
                 cosole.log(err);
               } else {
-                console.log(docs);
                 var newpid=docs.length+1;
               }   
-              collection.insert({"name":data.name,"description":data.description,"input":data.input,"output":data.output,"pid":newpid},{safe:true}, function(err, result) {if (err) console.log(err);else console.log("insert successfully");});
+              collection.insert(
+                {
+                  "name":data.name,
+                  "description":data.description,
+                  "input":data.input,
+                  "output":data.output,
+                  "pid":newpid
+                }, 
+                {safe:true},
+                function(err, result) {
+                  if (err) 
+                    console.log(err);
+                }
+              );
               ws.send(JSON.stringify({
                 "type": "create_successfully"
               }));
             });
           }
         });
-      } else if (data.type=="get_contests") {
+      } else if (data.type == "get_contests") {
         db.collection("contests",{safe:true},function(err,collection){
           if (err){
             console.log(err);
           } else {
             collection.find({}).toArray(function(err,docs){
-              console.log("find the following contests");
-              console.log(docs);
               var len=docs.length;
               var i=0;
               var name=new Array(len);
               var cid=new Array(len);
-			  var begin=new Array(len);
-			  var end=new Array(len);
+      			  var begin=new Array(len);
+      			  var end=new Array(len);
               for (i;i<len;i++){
                 name[i]=docs[i].name;
                 cid[i]=docs[i].cid;
-				begin[i]=docs[i].begin;
-				end[i]=docs[i].end;
+        				begin[i]=docs[i].begin;
+        				end[i]=docs[i].end;
               }
               ws.send(JSON.stringify({
                 "type": "showcontests",
                 "name": name,
                 "cid":cid,
-				"begin":begin,
-				"end":end,
+        				"begin":begin,
+        				"end":end,
               }));               
             });
           }
         });
-      } else if (data.type=="get_contest"){
-		  db.collection("contests",{safe:true},function(err,collection){
+      } else if (data.type == "get_contest"){
+		    db.collection("contests",{safe:true},function(err,collection){
           if (err){
             console.log(err);
           } else {
-              collection.find({"cid":data.cid}).toArray(function(err,docs){
-              console.log("find the specific contest");
-              console.log(docs);              
-			  var thiscontest=docs[0];
+              collection.find({"cid":data.cid}).toArray(function(err,docs){         
+			        var thiscontest=docs[0];
               //var description=thiscontest.description;
               var begin=thiscontest.begin;
               var end=thiscontest.end;
@@ -337,53 +377,63 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             });
           }
         });
-	  }else if (data.type=="delete_problem"){
-		db.collection("problems",{safe:true},function(err,collection){
-          if (err){
-            console.log(err);
-          }else{
-			  collection.remove({pid:data.pid},{safe:true},function(err,result){
-              	console.log(result);
-          		});  
-           };
-        });      
-		  
-	  
-	  
-	  }else if (data.type=="create_post"){
-        db.collection('posts',{safe:true},function(err,collection){
-          console.log("Insert a new post into the database");                
+  	  } else if (data.type == "delete_problem") {
+  		  db.collection("problems",{safe:true},function(err,collection){
           if (err){
             console.log(err);
           } else {
-            collection.find({}).toArray(function(err,docs){
+      		  collection.remove(
+      		    {pid: data.pid},
+      		    {safe: true},
+      		    function (err, result) {
+              	if (err)
+              	  console.log(err);
+          		}
+      		  );
+          };
+        });
+  	  } else if (data.type == "create_post") {
+        db.collection('posts',{safe:true},function(err,collection){               
+          if (err) {
+            console.log(err);
+          } else {
+            collection.find({}).toArray(function(err,docs) {
               if (err) {
                 cosole.log(err);
               } else {
-                console.log(docs);
                 var newpostid=docs.length+1;
               }   
-              collection.insert({"name":data.name,"description":data.description,"username":data.user,"postid":newpostid},{safe:true}, function(err, result) {if (err) console.log(err);else console.log("insert successfully");});
+              collection.insert(
+                {
+                  "name": data.name,
+                  "description": data.description,
+                  "username": data.user,
+                  "postid": newpostid
+                },
+                {safe:true},
+                function (err, result) {
+                  if (err)
+                    console.log(err);
+                }
+              );
               ws.send(JSON.stringify({
                 "type": "create_successfully"
               }));
             });
           }
-        });	  			  
-	  
-	  }else if (data.type=="get_post"){
-        db.collection("posts",{safe:true},function(err,collection){
+        });
+  	  } else if (data.type == "get_post"){
+        db.collection("posts", {safe:true}, function(err,collection){
           if (err){
             console.log(err);
-          }else{
+          } else {
             collection.find({postid:data.postid}).toArray(function(err,docs){
-              console.log(docs);
               var thispost=docs[0];
               var description=thispost.description;
               var name=thispost.name;
               var author=thispost.username;
               var pid=thispost.pid;
-			  var postid=thispost.postid;
+  		        var postid=thispost.postid;
               ws.send(JSON.stringify({
                 "type": "showpost",
                 "name": name,
@@ -394,26 +444,11 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
               }));             
             });
           }
-        });      
-	  
-	  	  
-	  }else if (data.type=="create_reply"){
-	  	
-	  
-	  
-	  }else if (data.type=="get_reply"){
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  }else if (data.type=="create_contest") {
-		//Contest ����淶�����ڸ�ʽ yyyy mm dd hh mm          pids��ʽ��xxx xxx xxx xxx         
-        db.collection('contests',{safe:true},function(err,collection){
-          console.log("Insert a new contest into the database");                
+        });
+  	  } else if (data.type=="create_reply") {
+  	  } else if (data.type=="get_reply") {
+  	  } else if (data.type=="create_contest") {      
+        db.collection('contests',{safe:true},function(err,collection){               
           if (err){
             console.log(err);
           } else {
@@ -421,9 +456,8 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
               if (err) {
                 cosole.log(err);
               } else {
-                console.log(docs);
                 var newcid=docs.length+1;
-              }   
+              }
               collection.insert(
                 { "name":data.name,
                   "begin":data.begin,
@@ -435,8 +469,6 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 function(err, result) {
                   if (err)
                     console.log(err);
-                  else
-                    console.log("insert successfully");
                 }
               );
               ws.send(JSON.stringify({

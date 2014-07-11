@@ -143,7 +143,7 @@ var backend=function(){
 			);
 		});
 	}
-	self.create_problem = function(name, desc, input, output) {
+	self.create_problem = function(name, desc, input, output, session) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
@@ -151,7 +151,8 @@ var backend=function(){
 					"name":name,
 					"description":desc,
 					"input":input,
-					"output":output
+					"output":output,
+					"session":session
 				})
 			);
 		});
