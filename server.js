@@ -352,7 +352,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                           console.log(err);
                       }
                     );
-                    fs.rename("tmp/"+data.session, "p"+newpid, function(err) {
+                    fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
                       if (err) {
                         console.log(err);
                         ws.send(JSON.stringify({
