@@ -272,15 +272,17 @@ static int prepare_run(judge_job *my_job, pthread_t tid) {
 	}
 	return 0;
 }
-static int prepare_input(judge_job *my_job, pthread_t tid) {
+static int prepare_input(judge_job *my_job, pthread_t tid, int case_no) {
 	char cmd[CMD_BUF_SIZE * 2];
 	my_job->input_file = rand() * RAND_MAX + rand();
 
 // copy test input
 	snprintf(cmd, CMD_BUF_SIZE, "/tmp/judged.%lu/runroot/%lu", tid,
 			my_job->input_file);
-// INPUT
-	if (copy_file(cmd, "/home/lzn/innovenus/judged/test.in")) {
+	cmd[CMD_BUF_SIZE - 1] = 0;
+	snprintf(cmd + CMD_BUF_SIZE, CMD_BUF_SIZE, "%s/%d.in", my_job->judge_dir, case_no);
+	cmd[CMD_BUF_SIZE*2 - 1] = 0;
+	if (copy_file(cmd, cmd + CMD_BUF_SIZE)) {
 		// ERROR
 		fprintf(stderr, "Error when copy input file in thread %lu, errno %d\n",
 				tid,
@@ -386,7 +388,6 @@ static int run(judge_job *my_job, pthread_t tid) {
 					errno);
 			fprintf(my_job->clientf, "0 SE\n");
 			delete_inputfile()
-			delete_execfile("runroot")
 			delete_outputfile()
 			return -1;
 		}
@@ -397,14 +398,12 @@ static int run(judge_job *my_job, pthread_t tid) {
 			fprintf(stderr, "Signaled %d\n", WTERMSIG(status));
 			fprintf(my_job->clientf, "0 RE\n");
 			delete_inputfile()
-			delete_execfile("runroot")
 			delete_outputfile()
 			return -1;
 		} else if (!WIFEXITED(status)) {
 			// ERROR
 			fprintf(my_job->clientf, "0 RE\n");
 			delete_inputfile()
-			delete_execfile("runroot")
 			delete_outputfile()
 			return -1;
 		}
@@ -412,21 +411,19 @@ static int run(judge_job *my_job, pthread_t tid) {
 			// ERROR
 			fprintf(my_job->clientf, "0 SE\n");
 			delete_inputfile()
-			delete_execfile("runroot")
 			delete_outputfile()
 			return -1;
 		}
-		printf("%d\n", WEXITSTATUS(status));
 		delete_inputfile()
-		//delete_execfile("runroot")
 	}
 	return 0;
 }
 static int judge(judge_job *my_job, pthread_t tid, judge_func judger,
-		double *score) {
+		double *score, int case_no) {
 	char cmd[CMD_BUF_SIZE * 2];
 	snprintf(cmd, CMD_BUF_SIZE, "/tmp/judged.%lu/runroot/%lu", tid,
 			my_job->output_file);
+	cmd[CMD_BUF_SIZE - 1] = 0;
 	FILE *outfile = fopen(cmd, "r");
 	if (outfile == NULL) {
 		// ERROR
@@ -435,7 +432,9 @@ static int judge(judge_job *my_job, pthread_t tid, judge_func judger,
 		fprintf(my_job->clientf, "0 SE\n");
 		return -1;
 	}
-	FILE *ansfile = fopen("/home/lzn/innovenus/judged/test.ans", "r");
+	snprintf(cmd, CMD_BUF_SIZE, "%s/%d.out", my_job->judge_dir, case_no);
+	cmd[CMD_BUF_SIZE - 1] = 0;
+	FILE *ansfile = fopen(cmd, "r");
 	if (ansfile == NULL) {
 		fclose(outfile);
 		// ERROR
@@ -493,12 +492,11 @@ void *judge_thread(void *) {
 			judge_func judger;
 			judger = (judge_func) dlsym(judgeso, "judge");
 
-			// TESTCASE COUNT
-			unsigned int testcase_num = 1;
-			double score_per_case = 100 / testcase_num;
-			int total_score = 0;
+			unsigned int testcase_num = my_job->num_case;
+			double score_per_case = 100.0 / testcase_num;
+			double total_score = 0;
 			while (testcase_num) {
-				if (prepare_input(my_job, tid)) {
+				if (prepare_input(my_job, tid, testcase_num)) {
 					fflush(my_job->clientf);
 					fclose(my_job->clientf);
 					break;
@@ -509,7 +507,7 @@ void *judge_thread(void *) {
 					break;
 				}
 				double score;
-				if (judge(my_job, tid, judger, &score)) {
+				if (judge(my_job, tid, judger, &score, testcase_num)) {
 					fflush(my_job->clientf);
 					fclose(my_job->clientf);
 					break;
@@ -519,13 +517,13 @@ void *judge_thread(void *) {
 					testcase_num--;
 				}
 			}
+			delete_execfile("runroot");
 			if (testcase_num == 0) {
 				// SCORE
 				if (total_score == 100)
 					fprintf(my_job->clientf, "100 AC\n");
 				else
-					fprintf(my_job->clientf, "%d WA\n", total_score);
-				printf("%d\n", total_score);
+					fprintf(my_job->clientf, "%.0f WA\n", total_score);
 				fflush(my_job->clientf);
 				fclose(my_job->clientf);
 				continue;

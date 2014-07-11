@@ -92,12 +92,11 @@ void *listen_thread(void *) {
 				continue;
 			}
 			judge_job *newjob = new judge_job;
-			if (fscanf(clientf, "%u %s %u", &(newjob->language), newjob->sourcefile,
-					&(newjob->pid)) < 2) {
+			if (fscanf(clientf, "%u %s %s %u", &(newjob->language), newjob->sourcefile,
+					newjob->judge_dir, &(newjob->num_case)) < 4) {
 				perror("Wrong request format\n");
 				fclose(clientf);
 				clientf = NULL;
-				close(client_fd);
 				client_fd = 0;
 				continue;
 			}
