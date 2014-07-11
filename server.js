@@ -22,7 +22,7 @@ function find_missing_casefile(dir, max_case, callback) {
   fs.readdir("tmp/" + dir, function(err, files) {
     if (err) {
       console.log(err);
-      callback(0);
+      callback(['all']);
       return;
     }
     files = files.join('\n');
@@ -52,10 +52,10 @@ webapp.post("/uploadcasefile", function(req, res) {
       files = [files];
     var processed = 0;
     files.forEach(function(file) {
-    	if (file.name.match(/[1-9][0-9]*.(in|ans)/)) {
+    	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
     	  fs.readFile(file.path, function(err, data) {
     	  	if (err) throw err;
-    	  	file.name = file.name.match(/([1-9][0-9]*.(in|ans))/)[0];
+    	  	file.name = file.name.match(/([1-9][0-9]*.(in|out))/)[0];
     	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
     	      processed++;
     	  	  if (processed == files.length)
@@ -235,6 +235,20 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
             });
           }
         });      
+      } else if (data.type=="get_result_with_user_problem"){
+        db.collection("results",{safe:true},function(err,collection){
+          if (err){
+            console.log(err);
+          } else {
+            collection.find({"pid":data.pid,"username":data.username}).toArray(function(err,docs){
+              if (err) {
+                console.log(err);
+                ws.send(JSON.stringify([]));
+              }
+              ws.send(JSON.stringify(relative_results));               
+            });
+          }
+        });
       } else if (data.type == "submit_code") {
         var pid=data.pid;
         var username=data.username;
@@ -297,36 +311,72 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
           });
         });
       } else if (data.type == "create_problem") {
-        db.collection('problems',{safe:true},function(err,collection){             
-          if (err){
-            console.log(err);
-          } else {
-            collection.find({}).toArray(function(err,docs){
-              if (err) {
-                cosole.log(err);
-              } else {
-                var newpid=docs.length+1;
-              }   
-              collection.insert(
-                {
-                  "name":data.name,
-                  "description":data.description,
-                  "input":data.input,
-                  "output":data.output,
-                  "pid":newpid
-                }, 
-                {safe:true},
-                function(err, result) {
-                  if (err) 
-                    console.log(err);
-                }
-              );
+        if (!data.session) {
+          ws.send(JSON.stringify({
+            "type": "error_message",
+            "content": "Bad session"
+          }));
+        } else {
+          find_missing_casefile(data.session, data.max_case, function(missing) {
+            if (missing.length != 0) {
               ws.send(JSON.stringify({
-                "type": "create_successfully"
+                "type": "error_message",
+                "content": "Missing test case "+missing
               }));
-            });
-          }
-        });
+              fs.rmdir("tmp/"+data.session, function(err){
+                console.log(err);
+              });
+            } else {
+              db.collection('problems', {safe:true}, function(err,collection){             
+                if (err){
+                  console.log(err);
+                } else {
+                  collection.find({}).toArray(function(err,docs){
+                    if (err) {
+                      cosole.log(err);
+                    } else {
+                      var newpid=docs.length+1;
+                    }   
+                    collection.insert(
+                      {
+                        "name":data.name,
+                        "description":data.description,
+                        "input":data.input,
+                        "output":data.output,
+                        "pid":newpid,
+                        "num_case":data.num_case
+                      }, 
+                      {safe:true},
+                      function(err, result) {
+                        if (err) 
+                          console.log(err);
+                      }
+                    );
+                    fs.rename("tmp/"+data.session, "p"+newpid, function(err) {
+                      if (err) {
+                        console.log(err);
+                        ws.send(JSON.stringify({
+                          "type": "error_message",
+                          "content": "Create problem directory failed"
+                        }));
+                        fs.rmdir("tmp/"+data.session, function(err){
+                          console.log(err);
+                        });
+                      } else {
+                        ws.send(JSON.stringify({
+                          "type": "create_successfully"
+                        }));
+                      }
+                      fs.rmdir("tmp/"+data.session, function(err){
+                        console.log(err);
+                      });
+                    })
+                  });
+                }
+              });
+            }
+          });
+        }
       } else if (data.type == "get_contests") {
         db.collection("contests",{safe:true},function(err,collection){
           if (err){
