@@ -45,7 +45,9 @@ webapp.use(bodyParser.urlencoded({extended:false}));
 webapp.use(require('connect-multiparty')());
 webapp.use(express.static(__dirname));
 webapp.post("/uploadcasefile", function(req, res) {
-  var session = req.body.session || generateRandom();
+  var session = req.body.session;
+  if ((typeof session == "undefined") || (session == null) || (session == "null"))
+    session = generateRandom();
   fs.mkdir(__dirname + "/tmp/" + session + "/", function(err) {
     var files = req.files.upload;
     if (!isArray(files))
@@ -297,12 +299,14 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                         "result":result
                       }));
                     });
-                    sock.write(
+                    var str=(
                       "0 " + // language
                       filename+" " + // sourcefile
-                      __dirname+"/problem/p"+data.pid+" " + // judge_dir
+                      __dirname+"/problem/"+data.pid+" " + // judge_dir
                       docs[0].num_case + // num_case
                       "\n");
+console.log(str);
+sock.write(str);
                   });
                 }
               });

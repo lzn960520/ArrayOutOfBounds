@@ -47,7 +47,8 @@ function do_add_problem() {
     $("#add-problem-modal #desc").val(),
     $("#add-problem-modal #input").val(),
     $("#add-problem-modal #output").val(),
-    add_problem_session);
+    add_problem_session,
+    $("#add-problem-modal #num-test-cases").val());
 }
 $(function() {
   $('#add-problem-modal').on("hidden.bs.modal", function(e) {

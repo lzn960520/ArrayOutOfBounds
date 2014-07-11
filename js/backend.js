@@ -1,11 +1,9 @@
 var port = 805;
 var backend=function(){
 	var self = this;
-	var ready = false;
 	var queue = [];
 	var working = false;
 	function onopen() {
-		ready = true;
 		socket.onmessage = function(event) {
 			var data = JSON.parse(event.data);
 			if (data.type == "error_message") {
@@ -78,15 +76,15 @@ var backend=function(){
 			work();
 	}
 	function waitForReady(callback) {
-		if (socket.readyState == socket.CLOSED) {
+		if ((socket.readyState == socket.CLOSED) || (socket.readyState == socket.CLOSING)) {
 			socket = new WebSocket("ws://"+location.hostname+":"+port);
 			socket.onopen = onopen;
 		}
-		if (ready)
+		if (socket.readyState == socket.OPEN)
 			callback();
 		else
 			setTimeout(function(){
-				if (ready)
+				if (socket.readyState == socket.OPEN)
 					callback();
 				else
 					popup_noti("<span style='color:red'>Connection timeout</span>");
@@ -143,7 +141,7 @@ var backend=function(){
 			);
 		});
 	}
-	self.create_problem = function(name, desc, input, output, session) {
+	self.create_problem = function(name, desc, input, output, session, num_case) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
@@ -152,7 +150,8 @@ var backend=function(){
 					"description":desc,
 					"input":input,
 					"output":output,
-					"session":session
+					"session":session,
+					"num_case":num_case
 				})
 			);
 		});
