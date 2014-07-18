@@ -46,7 +46,7 @@ webapp.use(require('connect-multiparty')());
 webapp.use(express.static(__dirname));
 webapp.post("/uploadcasefile", function(req, res) {
   var session = req.body.session;
-  if ((typeof session == "undefined") || (session == null) || (session == "null"))
+  if ((typeof session == "undefined") || (session == null) || (session == "null") || (session == ""))
     session = generateRandom();
   fs.mkdir(__dirname + "/tmp/" + session + "/", function(err) {
     var files = req.files.upload;
