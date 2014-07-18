@@ -49,6 +49,15 @@ webapp.post("/uploadcasefile", function(req, res) {
   if ((typeof session == "undefined") || (session == null) || (session == "null") || (session == ""))
     session = generateRandom();
   fs.mkdir(__dirname + "/tmp/" + session + "/", function(err) {
+    if (err) {
+      console.log(err);
+      res.end(
+        JSON.stringify({
+          "missing": ['all'],
+          "session": session
+        })
+      );
+    }
     var files = req.files.upload;
     if (!isArray(files))
       files = [files];
@@ -56,9 +65,18 @@ webapp.post("/uploadcasefile", function(req, res) {
     files.forEach(function(file) {
     	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
     	  fs.readFile(file.path, function(err, data) {
-    	  	if (err) throw err;
+    	  	if (err) {
+    	  	  console.log(err);
+    	  	  processed++;
+    	  	  return;
+    	  	}
     	  	file.name = file.name.match(/([1-9][0-9]*.(in|out))/)[0];
     	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
+    	  	  if (err) {
+    	  	    console.log(err);
+    	  	    processed++;
+    	  	    return;
+    	  	  }
     	      processed++;
     	  	  if (processed == files.length)
     	  	    find_missing_casefile(session, Number(req.body.max_case), function(missing) {
@@ -69,7 +87,6 @@ webapp.post("/uploadcasefile", function(req, res) {
                   })
                 );
     	  	    });
-    	  	  if (err) throw err;
     	  	});
     	  	fs.unlink(file.path);
     	  })
