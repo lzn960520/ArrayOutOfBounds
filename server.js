@@ -46,65 +46,55 @@ webapp.use(require('connect-multiparty')());
 webapp.use(express.static(__dirname));
 webapp.post("/uploadcasefile", function(req, res) {
   var session = req.body.session;
-  if ((typeof session == "undefined") || (session == null) || (session == "null") || (session == ""))
+  if ((typeof session == "undefined") || (session == null) || (session == "null") || (session == "")) {
     session = generateRandom();
-  fs.mkdir(__dirname + "/tmp/" + session + "/", function(err) {
-    if (err) {
-      console.log(err);
-      res.end(
-        JSON.stringify({
-          "missing": ['all'],
-          "session": session
-        })
-      );
-      return;
-    }
-    var files = req.files.upload;
-    if (!isArray(files))
-      files = [files];
-    var processed = 0;
-    files.forEach(function(file) {
-    	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
-    	  fs.readFile(file.path, function(err, data) {
-    	  	if (err) {
-    	  	  console.log(err);
-    	  	  processed++;
-    	  	  return;
-    	  	}
-    	  	file.name = file.name.match(/([1-9][0-9]*.(in|out))/)[0];
-    	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
-    	  	  if (err) {
-    	  	    console.log(err);
-    	  	    processed++;
-    	  	    return;
-    	  	  }
-    	      processed++;
-    	  	  if (processed == files.length)
-    	  	    find_missing_casefile(session, Number(req.body.max_case), function(missing) {
-    	  	      res.end(
-                  JSON.stringify({
-                    "missing": missing,
-                    "session": session
-                  })
-                );
-    	  	    });
-    	  	});
-    	  	fs.unlink(file.path);
-    	  })
-    	} else {
-    	  fs.unlink(file.path);
-    	  processed++;
-    	  if (processed == files.length)
-          find_missing_casefile(session, Number(req.body.max_case), function(missing) {
-            res.end(
-              JSON.stringify({
-                "missing": missing, 
-                "session": session
-              })
-            );
-          });
-    	}
-    });
+    fs.mkdirSync(__dirname + "/tmp/" + session + "/");
+  }
+  var files = req.files.upload;
+  if (!isArray(files))
+    files = [files];
+  var processed = 0;
+  files.forEach(function(file) {
+  	if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
+  	  fs.readFile(file.path, function(err, data) {
+  	  	if (err) {
+  	  	  console.log(err);
+  	  	  processed++;
+  	  	  return;
+  	  	}
+  	  	file.name = file.name.match(/([1-9][0-9]*.(in|out))/)[0];
+  	  	fs.writeFile(__dirname + "/tmp/" + session + "/" + file.name, data, function(err) {
+  	  	  if (err) {
+  	  	    console.log(err);
+  	  	    processed++;
+  	  	    return;
+  	  	  }
+  	      processed++;
+  	  	  if (processed == files.length)
+  	  	    find_missing_casefile(session, Number(req.body.max_case), function(missing) {
+  	  	      res.end(
+                JSON.stringify({
+                  "missing": missing,
+                  "session": session
+                })
+              );
+  	  	    });
+  	  	});
+  	  	fs.unlink(file.path);
+  	  })
+  	} else {
+  	  fs.unlink(file.path);
+  	  processed++;
+  	  if (processed == files.length)
+        find_missing_casefile(session, Number(req.body.max_case), function(missing) {
+          res.end(
+            JSON.stringify({
+              "missing": missing, 
+              "session": session
+            })
+          );
+        });
+  	}
   });
 })
 var server = webapp.listen(8000, function() {
