@@ -57,6 +57,7 @@ webapp.post("/uploadcasefile", function(req, res) {
           "session": session
         })
       );
+      return;
     }
     var files = req.files.upload;
     if (!isArray(files))
