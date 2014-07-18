@@ -75,6 +75,8 @@ $(function() {
       ];
     },
     done: function (e, data) {
+      $("#add-problem-modal #upload-info").text('Upload test cases...');
+      $("#add-problem-modal #upload-btn").removeClass("disabled");
       if (data.result.missing.length == 0) {
         $("#add-problem-modal #missing-files").text('nothing');
         $("#confirm-add-problem-btn").removeClass("disabled");
@@ -86,7 +88,8 @@ $(function() {
     },
     progress: function (e, data) {
       if (data.loaded == data.total) {
-        $("#add-problem-modal #upload-info").text('Upload test cases...');
+        $("#add-problem-modal #upload-info").text('Uploaded, processing');
+        $("#add-problem-modal #upload-btn").addClass("disabled");
       } else {
         $("#add-problem-modal #upload-info").text((Math.round(data.loaded / data.total * 1000)/10)+"%");
       }
