@@ -380,9 +380,6 @@ sock.write(str);
                           "type": "create_successfully"
                         }));
                       }
-                      fs.rmdir("tmp/"+data.session, function(err){
-                        console.log(err);
-                      });
                     })
                   });
                 }
