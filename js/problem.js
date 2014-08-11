@@ -94,9 +94,9 @@ function show_edit_problem(pid) {
     $("#add-edit-problem-modal").attr("pid", pid);
     $("#add-edit-problem-modal .modal-title").text("Edit problem");
     $("#add-edit-problem-modal #name").val(data.name);
-    $("#add-edit-problem-modal #desc").text(data.description);
-    $("#add-edit-problem-modal #input").text(data.simple_input);
-    $("#add-edit-problem-modal #output").text(data.simple_output);
+    $("#add-edit-problem-modal #desc").val(data.description);
+    $("#add-edit-problem-modal #input").val(data.simple_input);
+    $("#add-edit-problem-modal #output").val(data.simple_output);
     $("#add-edit-problem-modal #type").val(data.problem_type);
     $("#add-edit-problem-modal #num-test-cases").val(data.num_case);
     $("#add-edit-problem-modal #missing-files").text('nothing');

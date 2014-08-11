@@ -151,7 +151,7 @@ var backend=function(){
 			);
 		});
 	}
-	self.create_problem = function(pid, name, desc, input, output, session, num_case, type) {
+	self.edit_problem = function(pid, name, desc, input, output, session, num_case, type) {
     waitForReady(function() {
       send(
         JSON.stringify({
