@@ -299,35 +299,47 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                         "type": "error_message",
                         "content": "Create problem directory failed"
                       }));
-                      fs.rmdir("tmp/"+data.session, function(err){
-                        console.log(err);
+                      fs.rmdir("tmp/"+data.session, function(err) {
+                        if (err)
+                          console.log(err);
                       });
                     } else {
-                      collection.update(
-                        { "pid": parseInt(data.pid) },
-                        { $set: {
-                          "name": data.name,
-                          "description": data.description,
-                          "simple_input": data.simple_input,
-                          "simple_output": data.simple_output,
-                          "problem_type": data.problem_type,
-                          "num_case": data.num_case
-                        } },
-                        { safe:true },
-                        function(err, result) {
-                          if (err) {
-                            ws.send(JSON.stringify({
-                              "type": "error_message",
-                              "content": err
-                            }));
-                          } else {
-                            ws.send(JSON.stringify({
-                              "type": "noti_message",
-                              "content": "Update successfully"
-                            }));
-                          }
+                      db.collection("problems", {safe:true}, function(err, collection) {
+                        if (err) {
+                          console.log(err);
+                          ws.send(JSON.stringify({
+                            "type": "error_message",
+                            "content": "Database operation failed"
+                          }));
+                        } else {
+                          collection.update(
+                            { "pid": parseInt(data.pid) },
+                            { $set: {
+                              "name": data.name,
+                              "description": data.description,
+                              "simple_input": data.simple_input,
+                              "simple_output": data.simple_output,
+                              "problem_type": data.problem_type,
+                              "num_case": data.num_case
+                            } },
+                            { safe:true },
+                            function(err, result) {
+                              if (err) {
+                                console.log(err);
+                                ws.send(JSON.stringify({
+                                  "type": "error_message",
+                                  "content": "Database operation failed"
+                                }));
+                              } else {
+                                ws.send(JSON.stringify({
+                                  "type": "noti_message",
+                                  "content": "Update successfully"
+                                }));
+                              }
+                            }
+                          );
                         }
-                      );
+                      });
                     }
                   });
                 }
