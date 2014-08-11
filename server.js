@@ -231,22 +231,110 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
           }else{
             collection.find({pid:Number(data.pid)}).toArray(function(err,docs){
               var thisproblem=docs[0];
-              var description=thisproblem.description;
-              var simple_input=thisproblem.input;
-              var simple_output=thisproblem.output;
-              var pid=thisproblem.pid;
-              var name=thisproblem.name;
               ws.send(JSON.stringify({
                 "type": "showproblem",
-                "name": name,
-                "pid":pid,
-                "description":description,
-                "simple_input":simple_input,
-                "simple_output":simple_output
+                "name": thisproblem.name,
+                "pid": thisproblem.pid,
+                "description": thisproblem.description,
+                "simple_input": thisproblem.simple_input,
+                "simple_output": thisproblem.simple_output,
+                "num_case": thisproblem.num_case,
+                "type": thisproblem.type
               }));               
             });
           }
         });      
+      } else if (data.type == "edit_problem") {
+        if (!data.session) {
+          collection.update(
+            { "pid": parseInt(data.pid) },
+            { $set: {
+              "name": data.name,
+              "description": data.description,
+              "simple_input": data.simple_input,
+              "simple_output": data.simple_output,
+              "problem_type": data.problem_type
+            } },
+            { safe:true },
+            function(err, result) {
+              if (err) {
+                ws.send(JSON.stringify({
+                  "type": "error_message",
+                  "content": err
+                }));
+              } else {
+                ws.send(JSON.stringify({
+                  "type": "noti_message",
+                  "content": "Update successfully"
+                }));
+              }
+            }
+          );
+        } else {
+          find_missing_casefile(data.session, data.num_case, function(missing) {
+            if (missing.length != 0) {
+              ws.send(JSON.stringify({
+                "type": "error_message",
+                "content": "Missing test case "+missing
+              }));
+              fs.rmdir("tmp/"+data.session, function(err){
+                console.log(err);
+              });
+            } else {
+              fs.rmdir("problem/"+data.pid, function(err) {
+                if (err) {
+                  console.log(err);
+                  ws.send(JSON.stringify({
+                    "type": "error_message",
+                    "content": "Delete problem directory failed"
+                  }));
+                  fs.rmdir("tmp/"+data.session, function(err){
+                    console.log(err);
+                  });
+                } else {
+                  fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
+                    if (err) {
+                      console.log(err);
+                      ws.send(JSON.stringify({
+                        "type": "error_message",
+                        "content": "Create problem directory failed"
+                      }));
+                      fs.rmdir("tmp/"+data.session, function(err){
+                        console.log(err);
+                      });
+                    } else {
+                      collection.update(
+                        { "pid": parseInt(data.pid) },
+                        { $set: {
+                          "name": data.name,
+                          "description": data.description,
+                          "simple_input": data.simple_input,
+                          "simple_output": data.simple_output,
+                          "problem_type": data.problem_type,
+                          "num_case": data.num_case
+                        } },
+                        { safe:true },
+                        function(err, result) {
+                          if (err) {
+                            ws.send(JSON.stringify({
+                              "type": "error_message",
+                              "content": err
+                            }));
+                          } else {
+                            ws.send(JSON.stringify({
+                              "type": "noti_message",
+                              "content": "Update successfully"
+                            }));
+                          }
+                        }
+                      );
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
       } else if (data.type=="get_result_with_user_problem"){
         db.collection("results",{safe:true},function(err,collection){
           if (err){
@@ -315,8 +403,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                       __dirname+"/problem/"+data.pid+" " + // judge_dir
                       docs[0].num_case + // num_case
                       "\n");
-console.log(str);
-sock.write(str);
+                    sock.write(str);
                   });
                 }
               });
@@ -330,7 +417,7 @@ sock.write(str);
             "content": "Bad session"
           }));
         } else {
-          find_missing_casefile(data.session, data.max_case, function(missing) {
+          find_missing_casefile(data.session, data.num_case, function(missing) {
             if (missing.length != 0) {
               ws.send(JSON.stringify({
                 "type": "error_message",
@@ -340,50 +427,66 @@ sock.write(str);
                 console.log(err);
               });
             } else {
-              db.collection('problems', {safe:true}, function(err,collection){             
-                if (err){
+              fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
+                if (err) {
                   console.log(err);
+                  ws.send(JSON.stringify({
+                    "type": "error_message",
+                    "content": "Create problem directory failed"
+                  }));
+                  fs.rmdir("tmp/"+data.session, function(err){
+                    console.log(err);
+                  });
                 } else {
-                  collection.find({}).toArray(function(err,docs){
-                    if (err) {
-                      cosole.log(err);
+                  db.collection('problems', {safe:true}, function(err,collection){             
+                    if (err){
+                      console.log(err);
+                      ws.send(JSON.stringify({
+                        "type": "error_message",
+                        "content": "Database operation failed"
+                      }));
                     } else {
-                      var newpid=docs.length+1;
-                    }   
-                    collection.insert(
-                      {
-                        "name":data.name,
-                        "description":data.description,
-                        "input":data.input,
-                        "output":data.output,
-                        "pid":newpid,
-                        "num_case":data.num_case
-                      }, 
-                      {safe:true},
-                      function(err, result) {
-                        if (err) 
-                          console.log(err);
-                      }
-                    );
-                    fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
-                      if (err) {
-                        console.log(err);
-                        ws.send(JSON.stringify({
-                          "type": "error_message",
-                          "content": "Create problem directory failed"
-                        }));
-                        fs.rmdir("tmp/"+data.session, function(err){
-                          console.log(err);
-                        });
-                      } else {
-                        ws.send(JSON.stringify({
-                          "type": "create_successfully"
-                        }));
-                      }
-                    })
+                      collection.find({}).toArray(function(err,docs){
+                        if (err) {
+                          cosole.log(err);
+                          ws.send(JSON.stringify({
+                            "type": "error_message",
+                            "content": "Database operation failed"
+                          }));
+                        } else {
+                          var newpid=docs.length+1;
+                          collection.insert(
+                            {
+                              "name":data.name,
+                              "description":data.description,
+                              "input":data.input,
+                              "output":data.output,
+                              "pid":newpid,
+                              "num_case":data.num_case,
+                              "type":data.type
+                            }, 
+                            {safe:true},
+                            function(err, result) {
+                              if (err) {
+                                console.log(err);
+                                ws.send(JSON.stringify({
+                                  "type": "error_message",
+                                  "content": "Database operation failed"
+                                }));
+                              } else {
+                                ws.send(JSON.stringify({
+                                  "type": "noti_message",
+                                  "content": "Create successfully"
+                                }));
+                              }
+                            }
+                          );
+                        }
+                      });
+                    }
                   });
                 }
-              });
+              })
             }
           });
         }

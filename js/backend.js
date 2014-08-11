@@ -8,6 +8,8 @@ var backend=function(){
 			var data = JSON.parse(event.data);
 			if (data.type == "error_message") {
 				popup_noti("<span style='color:red'>Error: "+data.content+"</span>");
+			} else if (data.type == "noti_message") {
+			  popup_noti(data.content);
 			} else if (data.type == "create_successfully") {
 				popup_noti("Create successful");
 			} else if (data.type == "registration_successfully") {
@@ -22,15 +24,7 @@ var backend=function(){
 				$.cookie("username",data.username);
 				popup_noti("<i>Login successful</i>");
 			} else if (data.type == "showproblems") {
-				var name=data.name;
-				var pid=data.pid;
-				var n=name.length;
-				var i=0;
-				var content="<thead><tr><th>ID</th><th>Name</th></tr></thead><tbody>"
-				for (i=0;i<n;i++)
-					content+="<tr class='problem-row' pid='"+pid[i]+"' name='"+name[i]+"'><td>"+pid[i]+"</td><td>"+name[i]+"</td></tr>";
-				content+="</tbody>";
-				$("#problems-table").html(content);
+			  show_problems(data);
 			} else if (data.type == "showcontests") {
 				var content = "<thead><tr><th>ID</th><th>Name</th><th>Begin time</th><th>End time</th></thead><tbody>";
 				var length=data.cid.length;
@@ -141,7 +135,7 @@ var backend=function(){
 			);
 		});
 	}
-	self.create_problem = function(name, desc, input, output, session, num_case) {
+	self.create_problem = function(name, desc, input, output, session, num_case, type) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
@@ -151,11 +145,29 @@ var backend=function(){
 					"input":input,
 					"output":output,
 					"session":session,
-					"num_case":num_case
+					"num_case":num_case,
+					"problem_type":type
 				})
 			);
 		});
 	}
+	self.create_problem = function(pid, name, desc, input, output, session, num_case, type) {
+    waitForReady(function() {
+      send(
+        JSON.stringify({
+          "type":"edit_problem",
+          "pid":pid,
+          "name":name,
+          "description":desc,
+          "input":input,
+          "output":output,
+          "session":session,
+          "num_case":num_case,
+          "problem_type":type
+        })
+      );
+    });
+  }
 	self.create_contest = function(name, begin, end, pids) {
 		begin.setSeconds(0);
 		end.setSeconds(0);

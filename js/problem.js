@@ -43,26 +43,85 @@ function addProblemDiv(pid, callback) {
 }
 function do_add_problem() {
   backend.create_problem(
-    $("#add-problem-modal #name").val(),
-    $("#add-problem-modal #desc").val(),
-    $("#add-problem-modal #input").val(),
-    $("#add-problem-modal #output").val(),
+    $("#add-edit-problem-modal #name").val(),
+    $("#add-edit-problem-modal #desc").val(),
+    $("#add-edit-problem-modal #input").val(),
+    $("#add-edit-problem-modal #output").val(),
     add_problem_session,
-    $("#add-problem-modal #num-test-cases").val());
+    $("#add-edit-problem-modal #num-test-cases").val(),
+    $("#add-edit-problem-modal #type").val());
+}
+function do_edit_problem() {
+  backend.edit_problem(
+    $("#add-edit-problem-modal").attr("pid"),
+    $("#add-edit-problem-modal #name").val(),
+    $("#add-edit-problem-modal #desc").val(),
+    $("#add-edit-problem-modal #input").val(),
+    $("#add-edit-problem-modal #output").val(),
+    add_problem_session,
+    $("#add-edit-problem-modal #num-test-cases").val(),
+    $("#add-edit-problem-modal #type").val());
+}
+function show_add_problem() {
+  $("#add-edit-problem-modal .modal-title").text("Add problem");
+  $("#add-edit-problem-modal #confirm-add-problem-btn").show();
+  $("#add-edit-problem-modal #confirm-edit-problem-btn").hide();
+  $("#add-edit-problem-modal").modal();
+}
+function show_problems(data) {
+  var name=data.name;
+  var pid=data.pid;
+  var n=name.length;
+  var i=0;
+  var content=
+    "<thead><tr>"+
+      "<th>ID</th>"+
+      "<th>Name</th>"+
+    "</tr></thead><tbody>";
+  for (i=0;i<n;i++) {
+    content+=
+      "<tr class='problem-row' pid='"+pid[i]+"' name='"+name[i]+"'>"+
+        "<td>"+pid[i]+"</td>"+
+        "<td>"+name[i]+"</td>"+
+        "<td width='32'><span class='glyphicon glyphicon-wrench edit'></span></td>"+
+      "</tr>";
+  }
+  content+="</tbody>";
+  $("#problems-table").html(content);
+}
+function show_edit_problem(pid) {
+  backend.getProblem(pid, function(data) {
+    $("#add-edit-problem-modal").attr("pid", pid);
+    $("#add-edit-problem-modal .modal-title").text("Edit problem");
+    $("#add-edit-problem-modal #name").val(data.name);
+    $("#add-edit-problem-modal #desc").text(data.description);
+    $("#add-edit-problem-modal #input").text(data.simple_input);
+    $("#add-edit-problem-modal #output").text(data.simple_output);
+    $("#add-edit-problem-modal #type").val(data.problem_type);
+    $("#add-edit-problem-modal #num-test-cases").val(data.num_case);
+    $("#add-edit-problem-modal #missing-files").text('nothing');
+    $("#confirm-edit-problem-btn").removeClass("disabled");
+    $("#add-edit-problem-modal #confirm-add-problem-btn").hide();
+    $("#add-edit-problem-modal #confirm-edit-problem-btn").show();
+    $("#add-edit-problem-modal").modal();
+  });
 }
 $(function() {
-  $('#add-problem-modal').on("hidden.bs.modal", function(e) {
-    var div = $('#add-problem-modal');
+  $('#add-edit-problem-modal').on("hidden.bs.modal", function(e) {
+    var div = $('#add-edit-problem-modal');
     div.find("input").val("");
     div.find("textarea").val("");
+    div.find("#type").val("undefined");
     add_problem_session = null;
-    $("#add-problem-modal #num-test-cases").val(10);
-    $("#add-problem-modal #missing-files").text('all');
+    $("#add-edit-problem-modal #num-test-cases").val(10);
+    $("#add-edit-problem-modal #missing-files").text('all');
     $("#confirm-add-problem-btn").addClass("disabled");
+    $("#confirm-edit-problem-btn").addClass("disabled");
   });
-  $("#add-problem-modal #num-test-cases").change(function(e) {
-    $("#add-problem-modal #missing-files").text('all');
+  $("#add-edit-problem-modal #num-test-cases").change(function(e) {
+    $("#add-edit-problem-modal #missing-files").text('all');
     $("#confirm-add-problem-btn").addClass("disabled");
+    $("#confirm-edit-problem-btn").addClass("disabled");
   })
   $('#test-cases-upload').fileupload({
     dataType: 'json',
@@ -71,31 +130,32 @@ $(function() {
     formData: function() {
       return [
         { name: 'session', value: add_problem_session },
-        { name: 'max_case', value: $("#add-problem-modal #num-test-cases").val() }
+        { name: 'max_case', value: $("#add-edit-problem-modal #num-test-cases").val() }
       ];
     },
     done: function (e, data) {
-      $("#add-problem-modal #upload-info").text('Upload test cases...');
-      $("#add-problem-modal #upload-btn").removeClass("disabled");
+      $("#add-edit-problem-modal #upload-info").text('Upload test cases...');
+      $("#add-edit-problem-modal #upload-btn").removeClass("disabled");
       if (data.result.missing.length == 0) {
-        $("#add-problem-modal #missing-files").text('nothing');
+        $("#add-edit-problem-modal #missing-files").text('nothing');
         $("#confirm-add-problem-btn").removeClass("disabled");
+        $("#confirm-edit-problem-btn").removeClass("disabled");
       } else {
-        $("#add-problem-modal #missing-files").text(data.result.missing.join(', '));
+        $("#add-edit-problem-modal #missing-files").text(data.result.missing.join(', '));
         $("#confirm-add-problem-btn").addClass("disabled");
+        $("#confirm-edit-problem-btn").addClass("disabled");
       }
       add_problem_session = data.result.session;
     },
     progress: function (e, data) {
       if (data.loaded == data.total) {
-        $("#add-problem-modal #upload-info").text('Uploaded, processing');
-        $("#add-problem-modal #upload-btn").addClass("disabled");
+        $("#add-edit-problem-modal #upload-info").text('Uploaded, processing');
+        $("#add-edit-problem-modal #upload-btn").addClass("disabled");
       } else {
-        $("#add-problem-modal #upload-info").text((Math.round(data.loaded / data.total * 1000)/10)+"%");
+        $("#add-edit-problem-modal #upload-info").text((Math.round(data.loaded / data.total * 1000)/10)+"%");
       }
     }
   });
-  $("#add-problem-modal")
   $("body").delegate('.problem-row','click',function(e) {
     var pid=e.currentTarget.getAttribute("pid");
     if ($("#tab-p"+pid).length != 0)
@@ -107,6 +167,10 @@ $(function() {
         switchGUI("p"+pid);
       });
     }
+  });
+  $("body").delegate('.problem-row .edit','click',function(e) {
+    show_edit_problem(e.currentTarget.parentElement.parentElement.getAttribute("pid"));
+    e.stopPropagation();
   });
   $("body").delegate(".show-submit-problem-btn", "click", function(e) {
     var pid = e.currentTarget.getAttribute("pid");

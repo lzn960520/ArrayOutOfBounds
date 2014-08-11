@@ -47,7 +47,7 @@
 </head>
 
 <body style="margin:0">
-<div class="modal fade" id="add-problem-modal" tabindex="-1" role="dialog" aria-labelledby="label" aria-hidden="true">
+<div class="modal fade" id="add-edit-problem-modal" tabindex="-1" role="dialog" aria-labelledby="label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -71,6 +71,31 @@
 	      <textarea id="output" style="height:100px" class="userinput form-control" type="text"></textarea>
       	</div>
       	<div class="form-group">
+      	  <label for="type">Type</label>
+      	  <select id="type" class="userinput form-control">
+      	    <option value="Ad Hoc">Ad Hoc</option>
+      	    <option value="Graph">Graph</option>
+      	    <option value="Search">Search</option>
+      	    <option value="Union-Find Disjoint Set">Union-Find Disjoint Set</option>
+      	    <option value="Linear Data-structure">Linear Data-structure</option>
+      	    <option value="Dynamic Programming">Dynamic Programming</option>
+      	    <option value="Number Theory">Number Theory</option>
+      	    <option value="Mathematics">Mathematics</option>
+      	    <option value="Combinatorics">Combinatorics</option>
+      	    <option value="Tree">Tree</option>
+      	    <option value="Greedy">Greedy</option>
+      	    <option value="String">String</option>
+      	    <option value="Segment-tree">Segment-tree</option>
+      	    <option value="Fenwick Tree">Fenwick Tree</option>
+      	    <option value="BST">BST</option>
+      	    <option value="Geometry">Geometry</option>
+      	    <option value="Match">Match</option>
+      	    <option value="Network Flow">Network Flow</option>
+      	    <option value="Shortest Path">Shortest Path</option>
+      	    <option value="undefined">Undefined</option>
+      	  </select>
+      	</div>
+      	<div class="form-group">
       	  <label>Test cases</label>
       	  <div>
     			  <div id="upload-btn" class="btn btn-success fileinput-button">
@@ -91,6 +116,7 @@
       <div class="modal-footer">
       	<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
         <button type="button" id="confirm-add-problem-btn" onclick="do_add_problem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
+        <button type="button" id="confirm-edit-problem-btn" onclick="do_edit_problem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -187,9 +213,9 @@
             </div>
             <div class="ui" id="ui-problems">
             	<div id="problems-div" class="module">
-					<h3>Problems</h3>
+					    <h3>Problems</h3>
 	                <div style="margin-top: 30px">
-	                	<button class="btn btn-default" id="add-problem-btn" style="margin-left:90%;width:10%" data-toggle="modal" data-target="#add-problem-modal">Add</button>
+	                	<button class="btn btn-default" id="add-problem-btn" style="margin-left:90%;width:10%" onclick="show_add_problem();">Add</button>
 	                    <table id="problems-table" class="table table-striped">
 	                    	<tr>
 	                            <th>ID</th>
