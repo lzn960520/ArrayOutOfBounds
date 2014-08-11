@@ -229,7 +229,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
           if (err){
             console.log(err);
           }else{
-            collection.find({pid:Number(data.pid)}).toArray(function(err,docs){
+            collection.find({pid:parseInt(data.pid)}).toArray(function(err,docs){
               var thisproblem=docs[0];
               ws.send(JSON.stringify({
                 "type": "showproblem",

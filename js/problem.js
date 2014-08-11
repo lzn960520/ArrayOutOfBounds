@@ -14,11 +14,11 @@ function addProblemDiv(pid, callback) {
           "</div>"+
           "<div style='border-top:1px solid #e5e5e5'>"+
             "<h4>Sample input</h4>"+
-            "<pre>" + data.simple_input + "</pre>"+
+            "<pre>" + data.input + "</pre>"+
           "</div>"+
           "<div style='border-top:1px solid #e5e5e5'>"+
             "<h4>Sample output</h4>"+
-            "<pre>" + data.simple_output + "</pre>"+
+            "<pre>" + data.output + "</pre>"+
           "</div>"+
           "<button class='btn btn-success show-submit-problem-btn' pid='" + pid + "' style='margin-left:90%;width:10%'>Submit</button>"+
         "</div>"+
@@ -95,8 +95,8 @@ function show_edit_problem(pid) {
     $("#add-edit-problem-modal .modal-title").text("Edit problem");
     $("#add-edit-problem-modal #name").val(data.name);
     $("#add-edit-problem-modal #desc").val(data.description);
-    $("#add-edit-problem-modal #input").val(data.simple_input);
-    $("#add-edit-problem-modal #output").val(data.simple_output);
+    $("#add-edit-problem-modal #input").val(data.input);
+    $("#add-edit-problem-modal #output").val(data.output);
     $("#add-edit-problem-modal #type").val(data.problem_type);
     $("#add-edit-problem-modal #num-test-cases").val(data.num_case);
     $("#add-edit-problem-modal #missing-files").text('nothing');
