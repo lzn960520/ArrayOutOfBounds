@@ -236,8 +236,8 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 "name": thisproblem.name,
                 "pid": thisproblem.pid,
                 "description": thisproblem.description,
-                "simple_input": thisproblem.simple_input,
-                "simple_output": thisproblem.simple_output,
+                "input": thisproblem.input,
+                "output": thisproblem.output,
                 "num_case": thisproblem.num_case,
                 "type": thisproblem.type
               }));               
@@ -246,30 +246,40 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
         });      
       } else if (data.type == "edit_problem") {
         if (!data.session) {
-          collection.update(
-            { "pid": parseInt(data.pid) },
-            { $set: {
-              "name": data.name,
-              "description": data.description,
-              "simple_input": data.simple_input,
-              "simple_output": data.simple_output,
-              "problem_type": data.problem_type
-            } },
-            { safe:true },
-            function(err, result) {
-              if (err) {
-                ws.send(JSON.stringify({
-                  "type": "error_message",
-                  "content": err
-                }));
-              } else {
-                ws.send(JSON.stringify({
-                  "type": "noti_message",
-                  "content": "Update successfully"
-                }));
-              }
+          db.collection("problems", {safe:true}, function(err, collection) {
+            if (err) {
+              console.log(err);
+              ws.send(JSON.stringify({
+                "type": "error_message",
+                "content": "Database operation failed"
+              }));
+            } else {
+              collection.update(
+                { "pid": parseInt(data.pid) },
+                { $set: {
+                  "name": data.name,
+                  "description": data.description,
+                  "input": data.input,
+                  "output": data.output,
+                  "problem_type": data.problem_type
+                } },
+                { safe:true },
+                function(err, result) {
+                  if (err) {
+                    ws.send(JSON.stringify({
+                      "type": "error_message",
+                      "content": err
+                    }));
+                  } else {
+                    ws.send(JSON.stringify({
+                      "type": "noti_message",
+                      "content": "Update successfully"
+                    }));
+                  }
+                }
+              );
             }
-          );
+          });
         } else {
           find_missing_casefile(data.session, data.num_case, function(missing) {
             if (missing.length != 0) {
@@ -317,8 +327,8 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                             { $set: {
                               "name": data.name,
                               "description": data.description,
-                              "simple_input": data.simple_input,
-                              "simple_output": data.simple_output,
+                              "input": data.input,
+                              "output": data.output,
                               "problem_type": data.problem_type,
                               "num_case": data.num_case
                             } },
