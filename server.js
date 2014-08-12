@@ -288,31 +288,31 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 "type": "error_message",
                 "content": "Missing test case "+missing
               }));
-              exec("rmdir -r -f tmp/"+data.session, function(err){
+              exec("rm -r -f tmp/"+data.session, function(err){
                 if (err)
                   console.log(err);
               });
             } else {
-              exec("rmdir -r -f problem/"+data.pid, function(err) {
+              exec("rm -r -f problem/"+data.pid, function(err) {
                 if (err) {
                   console.log(err);
                   ws.send(JSON.stringify({
                     "type": "error_message",
                     "content": "Delete problem directory failed"
                   }));
-                  exec("rmdir -r -f tmp/"+data.session, function(err){
+                  exec("rm -r -f tmp/"+data.session, function(err){
                     if (err)
                       console.log(err);
                   });
                 } else {
-                  fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
+                  fs.rename("tmp/"+data.session, "problem/"+data.pid, function(err) {
                     if (err) {
                       console.log(err);
                       ws.send(JSON.stringify({
                         "type": "error_message",
                         "content": "Create problem directory failed"
                       }));
-                      exec("rmdir -r -f tmp/"+data.session, function(err) {
+                      exec("rm -r -f tmp/"+data.session, function(err) {
                         if (err)
                           console.log(err);
                       });
@@ -448,7 +448,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 "type": "error_message",
                 "content": "Missing test case "+missing
               }));
-              exec("rmdir -r -f tmp/"+data.session, function(err){
+              exec("rm -r -f tmp/"+data.session, function(err){
                 if (err)
                   console.log(err);
               });
@@ -460,7 +460,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                     "type": "error_message",
                     "content": "Create problem directory failed"
                   }));
-                  exec("rmdir -r -f tmp/"+data.session, function(err){
+                  exec("rm -r -f tmp/"+data.session, function(err){
                     if (err)
                       console.log(err);
                   });
