@@ -240,7 +240,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                 "input": thisproblem.input,
                 "output": thisproblem.output,
                 "num_case": thisproblem.num_case,
-                "type": thisproblem.type
+                "problem_type": thisproblem.type
               }));               
             });
           }
@@ -453,35 +453,35 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                   console.log(err);
               });
             } else {
-              fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
-                if (err) {
+              db.collection('problems', {safe:true}, function(err,collection){             
+                if (err){
                   console.log(err);
                   ws.send(JSON.stringify({
                     "type": "error_message",
-                    "content": "Create problem directory failed"
+                    "content": "Database operation failed"
                   }));
-                  exec("rm -r -f tmp/"+data.session, function(err){
-                    if (err)
-                      console.log(err);
-                  });
                 } else {
-                  db.collection('problems', {safe:true}, function(err,collection){             
-                    if (err){
-                      console.log(err);
+                  collection.find({}).toArray(function(err,docs){
+                    if (err) {
+                      cosole.log(err);
                       ws.send(JSON.stringify({
                         "type": "error_message",
                         "content": "Database operation failed"
                       }));
                     } else {
-                      collection.find({}).toArray(function(err,docs){
+                      var newpid=docs.length+1;
+                      fs.rename("tmp/"+data.session, "problem/"+newpid, function(err) {
                         if (err) {
-                          cosole.log(err);
+                          console.log(err);
                           ws.send(JSON.stringify({
                             "type": "error_message",
-                            "content": "Database operation failed"
+                            "content": "Create problem directory failed"
                           }));
+                          exec("rm -r -f tmp/"+data.session, function(err){
+                            if (err)
+                              console.log(err);
+                          });
                         } else {
-                          var newpid=docs.length+1;
                           collection.insert(
                             {
                               "name":data.name,
@@ -513,7 +513,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer({port: con
                     }
                   });
                 }
-              })
+              });
             }
           });
         }
