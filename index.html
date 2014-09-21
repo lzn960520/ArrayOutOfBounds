@@ -28,13 +28,13 @@
 	var editor_session = {};
 	var onactive = {
 		"welcome": function() {
-			backend.getContests();
+			doGetContests();
 		},
 		"problems": function() {
-			backend.getProblems();
+			doGetProblems();
 		},
 		"contests": function() {
-			backend.getContests();
+			doGetContests();
 		}
 	};
 	$(document).ready(function() {
@@ -115,8 +115,8 @@
       </div>
       <div class="modal-footer">
       	<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-        <button type="button" id="confirm-add-problem-btn" onclick="do_add_problem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
-        <button type="button" id="confirm-edit-problem-btn" onclick="do_edit_problem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
+        <button type="button" id="confirm-add-problem-btn" onclick="doAddProblem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
+        <button type="button" id="confirm-edit-problem-btn" onclick="doEditProblem();" class="btn btn-success disabled" data-dismiss="modal">Submit</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -162,7 +162,7 @@
       </div>
       <div class="modal-footer">
       	<button type="button" onclick="$('#add-contest-modal .userinput').val('');" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-        <button type="button" onclick="do_add_contest();" class="btn btn-success" data-dismiss="modal">Submit</button>
+        <button type="button" onclick="doAddContest();" class="btn btn-success" data-dismiss="modal">Submit</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -178,7 +178,7 @@
                 <button type="button" class="btn btn-default" id="signup">Sign up</button>
             </div>
             <div style="margin-left:10px;display:none" id="after-login" class="logintool">
-            	<div id="username" style="display:inline-block" onselectstart="javascript:return false;"></div>
+            	  <div id="username" style="display:inline-block" onselectstart="javascript:return false;"></div>
                 <button type="button" class="btn btn-danger" id="logout">Log out</button>
             </div>
         </div>
@@ -215,7 +215,7 @@
             	<div id="problems-div" class="module">
 					    <h3>Problems</h3>
 	                <div style="margin-top: 30px">
-	                	<button class="btn btn-default" id="add-problem-btn" style="margin-left:90%;width:10%" onclick="show_add_problem();">Add</button>
+	                	<button class="btn btn-default" id="add-problem-btn" style="margin-left:90%;width:10%" onclick="showAddProblem();">Add</button>
 	                    <table id="problems-table" class="table table-striped">
 	                    	<tr>
 	                            <th>ID</th>
@@ -223,7 +223,7 @@
 	                        </tr>
 	                    </table>
 					</div>
-                </div>
+              </div>
             </div>
             <div class="ui" id="ui-contests">
             	<div id="contests-div" class="module">
@@ -243,7 +243,7 @@
             </div>
         </div>
         <div class="popup popup-form" id="login-div">
-            <form id="login-form" onsubmit="return do_login();">
+            <form id="login-form" onsubmit="return doLogin();">
                 <div>
                     <label class="control-label">Username</label>
                     <input type="text" class="form-control" id="username" placeholder="Username" autocomplete="on">
@@ -258,7 +258,7 @@
             </form>
         </div>
         <div class="popup popup-form" id="reg-div">
-        	<form id="reg-form" onsubmit="return do_reg();">
+        	<form id="reg-form" onsubmit="return doRegister();">
                 <div>
                     <label class="control-label">Username</label>
                     <input type="text" class="form-control" id="username" placeholder="Username">

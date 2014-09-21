@@ -1,52 +1,31 @@
 var port = 805;
-var backend=function(){
+var backend = function() {
 	var self = this;
 	var queue = [];
 	var working = false;
+	var waiting = null;
 	function onopen() {
 		socket.onmessage = function(event) {
 			var data = JSON.parse(event.data);
-			if (data.type == "error_message") {
-				popup_noti("<span style='color:red'>Error: "+data.content+"</span>");
-			} else if (data.type == "noti_message") {
-			  popup_noti(data.content);
-			} else if (data.type == "create_successfully") {
-				popup_noti("Create successful");
-			} else if (data.type == "registration_successfully") {
-				switchGUI("problems");
-				switchNAV(1);
-				$("#after-login #username").html(data.username);
-				popup_noti("Registration successful");
-			} else if (data.type == "login_successfully") {
-				switchGUI("problems");
-				switchNAV(1);
-				$("#after-login #username").html(data.username);
-				$.cookie("username",data.username);
-				popup_noti("<i>Login successful</i>");
-			} else if (data.type == "showproblems") {
-			  show_problems(data);
-			} else if (data.type == "showcontests") {
-				var content = "<thead><tr><th>ID</th><th>Name</th><th>Begin time</th><th>End time</th></thead><tbody>";
-				var length=data.cid.length;
-				for (var i=0;i<length;i++) {
-					content+="<tr><td>"+data.cid[i]+"</td><td>"+data.name[i]+"</td><td>"+new Date(data.begin[i]).toLocaleString()+"</td><td>"+new Date(data.end[i]).toLocaleString()+"</td></tr>";
-					if (i==9)
-						$("#newest-contests-table").html(content);
-				}
-				if (i<9)
-					$("#newest-contests-table").html(content);
-				$("#contests-table").html(content);
-			} else if (data.type == "showresult") {
-				if (data.score == 100) {
-					popup_noti("<span style='color:green'>P"+data.pid+": Accepted</span>");
-				} else {
-					popup_noti("<span style='color:yellow'>P"+data.pid+": "+data.result+" "+data.score+"/100</span>");
-				}
+			switch (data.type) {
+			  case "error":
+			    popup_noti("<span style='color:red'>Error: "+data.content+"</span>");
+			    break;
+			  case "notification":
+			    popup_noti(noti);
+			    break;
+        default:
+          if (queue[0].callback)
+          queue[0].callback(data);
+          queue.shift();
+          work();
+          break;
 			}
-			if (queue[0].callback)
-				queue[0].callback(data);
-			queue.shift();
-			work();
+		}
+		if (waiting) {
+		  clearTimeout(waiting[0]);
+		  waiting[1]();
+		  waiting = null;
 		}
 	}
 	var socket = new WebSocket("ws://"+location.hostname+":"+port);
@@ -62,8 +41,8 @@ var backend=function(){
 	}
 	function send(data,callback) {
 		var job = {
-			"data":data,
-			"callback":callback || null
+			"data": data,
+			"callback": callback || null
 		};
 		queue.push(job);
 		if (!working)
@@ -76,34 +55,37 @@ var backend=function(){
 		}
 		if (socket.readyState == socket.OPEN)
 			callback();
-		else
-			setTimeout(function(){
-				if (socket.readyState == socket.OPEN)
-					callback();
-				else
-					popup_noti("<span style='color:red'>Connection timeout</span>");
-			}, 5000);
+		else {
+			waiting = [
+			  setTimeout(function(){
+  				if (socket.readyState == socket.OPEN)
+  					callback();
+  				else
+  					popup_noti("<span style='color:red'>Connection timeout</span>");
+  			}, 5000),
+			  callback
+			];
+	  }
 	}
-	self.login=function(username, password) {
-		waitForReady(function() {
-			send(
-				JSON.stringify(
-					{	"type":"check_login",
-						"username": username,
-						"password": password
-					}
-				)
-			);
-		});
-	}
-	self.reg=function(username,password) {
+	self.login = function(username, password, callback) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"registration",
+				  "type": "login",
 					"username": username,
 					"password": password
-				})
+				}), callback
+			);
+		});
+	}
+	self.register = function(username, password, callback) {
+		waitForReady(function() {
+			send(
+				JSON.stringify({
+					"type": "register",
+					"username": username,
+					"password": password
+				}), callback
 			);
 		});
 	}
@@ -111,86 +93,87 @@ var backend=function(){
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"getProblem",
-					"pid":pid
+					"type": "getProblem",
+					"pid": pid
 				}), callback
 			);
 		});
 	}
-	self.getProblems = function() {
+	self.getProblems = function(callback) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"getProblems",
-				})
+					"type": "getProblems",
+				}), callback
 			);
 		});
 	}
-	self.getContests = function() {
+	self.getContests = function(callback) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"get_contests",
-				})
+					"type": "getContests",
+				}), callback
 			);
 		});
 	}
-	self.create_problem = function(name, desc, input, output, session, num_case, type) {
+	self.addProblem = function(name, desc, input, output, session, num_case, type, callback) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"create_problem",
-					"name":name,
-					"description":desc,
-					"input":input,
-					"output":output,
-					"session":session,
-					"num_case":num_case,
-					"problem_type":type
-				})
+					"type": "addProblem",
+					"name": name,
+					"description": desc,
+					"input": input,
+					"output": output,
+					"session": session,
+					"num_case": num_case,
+					"problem_type": type
+				}), callback
 			);
 		});
 	}
-	self.edit_problem = function(pid, name, desc, input, output, session, num_case, type) {
+	self.editProblem = function(pid, name, desc, input, output, session, num_case, type, callback) {
     waitForReady(function() {
       send(
         JSON.stringify({
-          "type":"edit_problem",
-          "pid":pid,
-          "name":name,
-          "description":desc,
-          "input":input,
-          "output":output,
-          "session":session,
-          "num_case":num_case,
-          "problem_type":type
-        })
+          "type": "editProblem",
+          "pid": pid,
+          "name": name,
+          "description": desc,
+          "input": input,
+          "output": output,
+          "session": session,
+          "num_case": num_case,
+          "problem_type": type
+        }), callback
       );
     });
   }
-	self.create_contest = function(name, begin, end, pids) {
+	self.addContest = function(name, begin, end, pids, callback) {
 		begin.setSeconds(0);
 		end.setSeconds(0);
 		waitForReady(function() {
 			send(
 				JSON.stringify({
-					"type":"create_contest",
-					"name":name,
-					"begin":begin,
-					"end":end,
-					"problems":pids
-				})
+					"type": "addContest",
+					"name": name,
+					"begin": begin,
+					"end": end,
+					"problems": pids
+				}), callback
 			);
 		});
 	}
-	self.submit_code = function(username, code, pid) {
+	self.submitCode = function(username, pid, code, callback) {
 		waitForReady(function() {
 			send(
-				JSON.stringify({"type":"submit_code",
-					"username":username,
-					"code":code,
+				JSON.stringify({
+				  "type": "submitCode",
+					"username": username,
+					"code": code,
 					"pid": pid
-				})
+				}), callback
 			);
 		});
 	}

@@ -41,55 +41,31 @@ function addProblemDiv(pid, callback) {
     callback();
   });
 }
-function do_add_problem() {
-  backend.create_problem(
-    $("#add-edit-problem-modal #name").val(),
-    $("#add-edit-problem-modal #desc").val(),
-    $("#add-edit-problem-modal #input").val(),
-    $("#add-edit-problem-modal #output").val(),
-    add_problem_session,
-    $("#add-edit-problem-modal #num-test-cases").val(),
-    $("#add-edit-problem-modal #type").val());
-}
-function do_edit_problem() {
-  backend.edit_problem(
-    $("#add-edit-problem-modal").attr("pid"),
-    $("#add-edit-problem-modal #name").val(),
-    $("#add-edit-problem-modal #desc").val(),
-    $("#add-edit-problem-modal #input").val(),
-    $("#add-edit-problem-modal #output").val(),
-    add_problem_session,
-    $("#add-edit-problem-modal #num-test-cases").val(),
-    $("#add-edit-problem-modal #type").val());
-}
-function show_add_problem() {
+function showAddProblem() {
   $("#add-edit-problem-modal .modal-title").text("Add problem");
   $("#add-edit-problem-modal #confirm-add-problem-btn").show();
   $("#add-edit-problem-modal #confirm-edit-problem-btn").hide();
   $("#add-edit-problem-modal").modal();
 }
-function show_problems(data) {
-  var name=data.name;
-  var pid=data.pid;
-  var n=name.length;
-  var i=0;
-  var content=
-    "<thead><tr>"+
-      "<th>ID</th>"+
-      "<th>Name</th>"+
-    "</tr></thead><tbody>";
-  for (i=0;i<n;i++) {
-    content+=
-      "<tr class='problem-row' pid='"+pid[i]+"' name='"+name[i]+"'>"+
-        "<td>"+pid[i]+"</td>"+
-        "<td>"+name[i]+"</td>"+
-        "<td width='32'><span class='glyphicon glyphicon-wrench edit'></span></td>"+
-      "</tr>";
-  }
-  content+="</tbody>";
-  $("#problems-table").html(content);
+function doAddProblem() {
+  backend.addProblem(
+    $("#add-edit-problem-modal #name").val(),
+    $("#add-edit-problem-modal #desc").val(),
+    $("#add-edit-problem-modal #input").val(),
+    $("#add-edit-problem-modal #output").val(),
+    add_problem_session,
+    $("#add-edit-problem-modal #num-test-cases").val(),
+    $("#add-edit-problem-modal #type").val(),
+    function(result) {
+      if (result.success) {
+        popup_noti("Add problem successfully");
+      } else {
+        popup_noti("<span style='color:red'>Add problem failed: " + result.reason + "</span>");
+      }
+    }
+  );
 }
-function show_edit_problem(pid) {
+function showEditProblem(pid) {
   backend.getProblem(pid, function(data) {
     $("#add-edit-problem-modal").attr("pid", pid);
     $("#add-edit-problem-modal .modal-title").text("Edit problem");
@@ -104,6 +80,62 @@ function show_edit_problem(pid) {
     $("#add-edit-problem-modal #confirm-add-problem-btn").hide();
     $("#add-edit-problem-modal #confirm-edit-problem-btn").show();
     $("#add-edit-problem-modal").modal();
+  });
+}
+function doEditProblem() {
+  backend.edit_problem(
+    $("#add-edit-problem-modal").attr("pid"),
+    $("#add-edit-problem-modal #name").val(),
+    $("#add-edit-problem-modal #desc").val(),
+    $("#add-edit-problem-modal #input").val(),
+    $("#add-edit-problem-modal #output").val(),
+    add_problem_session,
+    $("#add-edit-problem-modal #num-test-cases").val(),
+    $("#add-edit-problem-modal #type").val(),
+    function(result) {
+      if (result.success) {
+        popup_noti("Edit problem successfully");
+      } else {
+        popup_noti("<span style='color:red'>Edit problem failed: " + result.reason + "</span>");
+      }
+    }
+  );
+}
+function doGetProblems() {
+  backend.getProblems(function(result) {
+    if (result.success) {
+      var name = result.name;
+      var pid = result.pid;
+      var length = result.length;
+      var content=
+        "<thead><tr>"+
+          "<th>ID</th>"+
+          "<th>Name</th>"+
+        "</tr></thead><tbody>";
+      for (var i = 0; i < length; i++) {
+        content+=
+          "<tr class='problem-row' pid='"+pid[i]+"' name='"+name[i]+"'>"+
+            "<td>"+pid[i]+"</td>"+
+            "<td>"+name[i]+"</td>"+
+            "<td width='32'><span class='glyphicon glyphicon-wrench edit'></span></td>"+
+          "</tr>";
+      }
+      content+="</tbody>";
+      $("#problems-table").html(content);
+    }
+  });
+}
+function doSubmitCode(username, pid, code) {
+  backend.submitCode(username, pid, code, function(result) {
+    if (result.success) {
+      if (result.score == 100) {
+        popup_noti("<span style='color:green'>P"+result.pid+": Accepted</span>");
+      } else {
+        popup_noti("<span style='color:yellow'>P"+result.pid+": "+result.result+" "+result.score+"/100</span>");
+      }
+    } else {
+      popup_noti("<span style='color:red'>Submit code failed: " + result.reason + "</span>");
+    }
   });
 }
 $(function() {
@@ -157,19 +189,19 @@ $(function() {
     }
   });
   $("body").delegate('.problem-row','click',function(e) {
-    var pid=e.currentTarget.getAttribute("pid");
+    var pid = e.currentTarget.getAttribute("pid");
     if ($("#tab-p"+pid).length != 0)
       switchGUI("p"+pid);
     else {
       var name=e.currentTarget.getAttribute("name");
-      addTab("p"+pid,name);
-      addProblemDiv(pid, function(){
+      addProblemDiv(pid, function() {
+        addTab("p"+pid, name);
         switchGUI("p"+pid);
       });
     }
   });
   $("body").delegate('.problem-row .edit','click',function(e) {
-    show_edit_problem(e.currentTarget.parentElement.parentElement.getAttribute("pid"));
+    showEditProblem(e.currentTarget.parentElement.parentElement.getAttribute("pid"));
     e.stopPropagation();
   });
   $("body").delegate(".show-submit-problem-btn", "click", function(e) {
@@ -192,6 +224,6 @@ $(function() {
     var submit_div = $("#main #body #ui-p"+pid+" #submit");
     desc_div.show();
     submit_div.hide();
-    backend.submit_code($.cookie("username"), editor_session[pid].getValue(), pid);
+    doSubmitCode($.cookie("username"), pid, editor_session[pid].getValue());
   });
 });

@@ -28,7 +28,7 @@ var notimanager = function(){
 		if (!playing)
 			anim();
 	}
-	this.popup = function(message, color) {
+	this.popup = function(message) {
 		var noti = '<div class="noti" style="display:none;position:fixed;top:' + notitop + 'px;right:1%">'+message+'</div>';
 		$("body").append(noti);
 		notitop += $(".noti:last").outerHeight()+10;
@@ -40,8 +40,4 @@ var notimanager = function(){
 
 function popup_noti(message) {
 	notimanager.popup(message);
-}
-
-function popup_error_noti(message) {
-	notimanager.popup(message, "red");
 }
