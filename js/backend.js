@@ -15,7 +15,7 @@ var backend = function() {
           "type": "openSession",
           "session": self.session,
         }), function(result) {
-          if (isNAV(1)) {
+          if (self.session != result.set_session && isNAV(1)) {
             popup_noti("<span style='color:red'>Please login again</span>");
             $.removeCookie("username");
             $("#after-login #username").html("");
