@@ -1,4 +1,10 @@
 module.exports = function(env) {
+  function checkUsername(name){
+    return name.length >= 6;
+  }
+  function checkPassword(password){
+    return password.length >= 6;
+  }
   function handleLogin(req, res) {
     req.db.collection('users', { safe: true, strict: true }, function(err, collection) {
       if (err)
@@ -8,10 +14,14 @@ module.exports = function(env) {
           res.fail("User does not exist");
         else if (docs[0].password != req.data.password)
           res.fail("Password is not correct");
-        else
+        else {
+          res.session.loginLevel = docs[0].level;
+          res.session.username = docs[0].username;
           res.success({
-            "username": data.username
+            "username": docs[0].username,
+            "loginLevel": docs[0].level
           });
+        }
       });
     });
   }
@@ -35,7 +45,8 @@ module.exports = function(env) {
           else {
             collection.insert({
               "username": username,
-              "password": password
+              "password": password,
+              "level": 1
             }, {safe:true}, function(err, result) {
               if (err)
                 throw new Error(err);
@@ -48,6 +59,16 @@ module.exports = function(env) {
     });
   }
   
+  function handleLogout(req, res) {
+    if (!req.session)
+      res.resession();
+    res.session.username = "";
+    res.session.loginLevel = 0;
+    res.success();
+  }
+  
   env.registerHandler("login", handleLogin);
   env.registerHandler("register", handleRegister);
+  env.registerHandler("logout", handleLogout);
+  env.registerDefaultSession({ "username": "", "loginLevel": 0 });
 }

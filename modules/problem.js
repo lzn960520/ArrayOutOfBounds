@@ -1,5 +1,26 @@
 module.exports = function(env) {
   var net = require('net');
+  var exec = require("child_process").exec;
+  function findMissingCasefile(dir, max_case, callback) {
+    if (!callback)
+      return;
+    fs.readdir("tmp/" + dir, function(err, files) {
+      if (err) {
+        console.log(err.stack);
+        callback(['all']);
+        return;
+      }
+      files = files.join('\n');
+      var ans = [];
+      for (var i = 1; i <= max_case; i++) {
+        if (!files.match(i+'.in'))
+          ans.push(i+'.in');
+        if (!files.match(i+'.out'))
+          ans.push(i+'.out');
+      }
+      callback(ans);
+    })
+  }
   
   function handleGetProblem(req, res) {
     req.db.collection("problems", { safe: true, strict: true }, function(err, collection){
@@ -46,21 +67,33 @@ module.exports = function(env) {
   }
   
   function handleAddProblem(req, res) {
-    if (!req.data.session)
+    if (!req.session) {
+      res.resession();
+      return;
+    }
+    if (req.session.loginLevel == 0) {
+      res.fail("You need login first");
+      return;
+    }
+    if (req.session.loginLevel == 1) {
+      res.fail("You don't have privilege to add problem");
+      return;
+    }
+    if (!req.data.upload_session)
       res.fail("Bad session");
     else {
-      var session = req.data.session;
+      var session = req.data.upload_session;
       find_missing_casefile(session, req.data.num_case, function(missing) {
         if (missing.length != 0) {
           res.fail("Missing test case " + missing);
-          process.exec("rm -r -f tmp/" + session, function(err) {
+          exec("rm -r -f tmp/" + session, function(err) {
             if (err)
               throw new Error(err);
           });
         } else {
           req.db.collection('problems', { safe: true, strict: true }, function(err, collection) {             
             if (err) {
-              process.exec("rm -r -f tmp/" + session, function(err) {
+              exec("rm -r -f tmp/" + session, function(err) {
                 if (err)
                   throw new Error(err);
               });
@@ -68,7 +101,7 @@ module.exports = function(env) {
             }
             collection.count({}, function(err, count){
               if (err) {
-                process.exec("rm -r -f tmp/" + session, function(err) {
+                exec("rm -r -f tmp/" + session, function(err) {
                   if (err)
                     throw new Error(err);
                 });
@@ -77,7 +110,7 @@ module.exports = function(env) {
               var newpid = count + 1;
               fs.rename("tmp/" + session, "problem/" + newpid, function(err) {
                 if (err) {
-                  process.exec("rm -r -f tmp/" + session, function(err) {
+                  exec("rm -r -f tmp/" + session, function(err) {
                     if (err)
                       throw new Error(err);
                   });
@@ -94,7 +127,7 @@ module.exports = function(env) {
                     "type": req.data.type
                   }, { safe: true }, function(err, result) {
                     if (err) {
-                      process.exec("rm -r -f problem/" + newpid, function(err) {
+                      exec("rm -r -f problem/" + newpid, function(err) {
                         if (err)
                           throw new Error(err);
                       });
@@ -112,7 +145,19 @@ module.exports = function(env) {
   }
   
   function handleEditProblem(req, res) {
-    var session = req.data.session;
+    if (!req.session) {
+      res.resession();
+      return;
+    }
+    if (req.session.loginLevel == 0) {
+      res.fail("You need login first");
+      return;
+    }
+    if (req.session.loginLevel == 1) {
+      res.fail("You don't have privilege to edit problem");
+      return;
+    }
+    var session = req.data.upload_session;
     if (!session) {
       req.db.collection("problems", { safe: true, strict: true }, function(err, collection) {
         if (err)
@@ -188,6 +233,18 @@ module.exports = function(env) {
   }
   
   function handleRemoveProblem(req, res) {
+    if (!req.session) {
+      res.resession();
+      return;
+    }
+    if (req.session.loginLevel == 0) {
+      res.fail("You need login first");
+      return;
+    }
+    if (req.session.loginLevel == 1) {
+      res.fail("You don't have privilege to remove problem");
+      return;
+    }
     req.db.collection("problems", { safe: true, strict: true }, function(err, collection) {
       if (err)
         throw new Error(err);
@@ -203,6 +260,14 @@ module.exports = function(env) {
   }
   
   function handleSubmitCode(req, res) {
+    if (!req.session) {
+      res.resession();
+      return;
+    }
+    if (req.session.loginLevel == 0) {
+      res.fail("You need login first");
+      return;
+    }
     var pid = req.data.pid;
     var username = req.data.username;
     var filename = "/tmp/" + Math.floor(Math.random()*1000007);
@@ -249,6 +314,22 @@ module.exports = function(env) {
             });
           }
         });
+      });
+    });
+  }
+  
+  function handleGetResult(req, res) {
+    req.db.collection("results", { safe: true, strict: true }, function(err, collection) {
+      if (err)
+        throw new Error(err);
+      collection.find(
+        {
+          "pid": req.data.pid,
+          "username": req.data.username
+        }).toArray(function(err, docs) {
+        if (err)
+          throw new Error(err);
+        ws.send(JSON.stringify(relative_results));               
       });
     });
   }

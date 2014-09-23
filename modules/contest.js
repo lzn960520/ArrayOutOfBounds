@@ -44,6 +44,45 @@ module.exports = function(env) {
     });
   }
   
+  function handleAddContest(req, res) {
+    if (!req.session) {
+      res.resession();
+      return;
+    }
+    if (req.session.loginLevel == 0) {
+      res.fail("You need login first");
+      return;
+    }
+    if (req.session.loginLevel == 1) {
+      res.fail("You don't have privilege to add contest");
+      return;
+    }
+    req.db.collection('contests', { safe: true, strict: true }, function(err, collection) {               
+      if (err)
+        throw new Error(err);
+      collection.count({}, function(err, count) {
+        if (err)
+          throw new Error(err);
+        collection.insert(
+          { 
+            "name": req.data.name,
+            "begin": req.data.begin,
+            "end": req.data.end,
+            "problems": req.data.problems,
+            "cid": count + 1
+          },
+          { safe: true },
+          function(err, result) {
+            if (err)
+              throw new Error(err);
+            res.success();
+          }
+        );
+      });
+    });
+  }
+  
   env.registerHandler("getContest", handleGetContest);
   env.registerHandler("getContests", handleGetContests);
+  env.registerHandler("addContest", handleAddContest);
 }

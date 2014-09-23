@@ -9,22 +9,49 @@ function Response(ws, data) {
   this.data = data;
 }
 
-Response.prototype.fail = function(reason) {
+Response.prototype.resession = function() {
+  this.ws.send(JSON.stringify({
+    "type": "resession",
+  }));
   this.ws.send(JSON.stringify({
     "type": this.data.type,
     "success": false,
-    "reason": reason
+    "reason": "Bad session"
   }));
 }
 
+Response.prototype.fail = function(reason) {
+  var self = this;
+  if (self.session)
+    self.session.writeBack(function() {
+      self.ws.send(JSON.stringify({
+        "type": self.data.type,
+        "success": false,
+        "reason": reason
+      }));
+    });
+  else
+    self.ws.send(JSON.stringify({
+      "type": self.data.type,
+      "success": false,
+      "reason": reason
+    }));
+}
+
 Response.prototype.success = function(data) {
+  var self = this;
   var res = {
     "type": this.data.type,
     "success": true
   }
   for (var i in data)
     res[i] = data[i];
-  this.ws.send(JSON.stringify(res));
+  if (self.session)
+    self.session.writeBack(function() {
+      self.ws.send(JSON.stringify(res));
+    });
+  else
+    self.ws.send(JSON.stringify(res));
 }
 
 module.exports.Request = Request;
