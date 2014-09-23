@@ -4,6 +4,36 @@ var backend = function() {
 	var queue = [];
 	var working = false;
 	var waiting = null;
+	if ($.cookie("session"))
+	  self.session = $.cookie("session");
+	else
+	  self.session = null;
+	function openSession() {
+	  waitForReady(function() {
+      send(
+        JSON.stringify({
+          "type": "openSession",
+          "session": self.session,
+        }), function(result) {
+          if (isNAV(1)) {
+            popup_noti("<span style='color:red'>Please login again</span>");
+            $.removeCookie("username");
+            $("#after-login #username").html("");
+            switchNAV(0);
+          }
+          self.session = result.set_session;
+          self.username = result.username;
+          self.loginLevel = result.loginLevel;
+          $.cookie("session", self.session);
+          if (waiting) {
+            clearTimeout(waiting[0]);
+            waiting[1]();
+            waiting = null;
+          }
+        }
+      );
+    });
+	}
 	function onopen() {
 		socket.onmessage = function(event) {
 			var data = JSON.parse(event.data);
@@ -12,7 +42,11 @@ var backend = function() {
 			    popup_noti("<span style='color:red'>Error: "+data.content+"</span>");
 			    break;
 			  case "notification":
-			    popup_noti(noti);
+			    popup_noti(data.content);
+			    break;
+			  case "resession":
+			    queue = [ queue[0] ];
+			    openSession();
 			    break;
         default:
           if (queue[0].callback)
@@ -22,11 +56,7 @@ var backend = function() {
           break;
 			}
 		}
-		if (waiting) {
-		  clearTimeout(waiting[0]);
-		  waiting[1]();
-		  waiting = null;
-		}
+		openSession();
 	}
 	var socket = new WebSocket("ws://"+location.hostname+":"+port);
 	socket.onopen = onopen;
@@ -36,7 +66,13 @@ var backend = function() {
 			return;
 		} else {
 			working = true;
-			socket.send(queue[0].data);
+			if (queue[0].data)
+			  socket.send(queue[0].data);
+			else {
+			  queue[0].callback();
+        queue.shift();
+        work();
+			}
 		}
 	}
 	function send(data,callback) {
@@ -72,6 +108,7 @@ var backend = function() {
 			send(
 				JSON.stringify({
 				  "type": "login",
+				  "session": self.session,
 					"username": username,
 					"password": password
 				}), callback
@@ -83,17 +120,29 @@ var backend = function() {
 			send(
 				JSON.stringify({
 					"type": "register",
+					"session": self.session,
 					"username": username,
 					"password": password
 				}), callback
 			);
 		});
 	}
+	self.logout = function(callback) {
+	  waitForReady(function() {
+      send(
+        JSON.stringify({
+          "type": "logout",
+          "session": self.session,
+        }), callback
+      );
+    });
+	}
 	self.getProblem = function(pid, callback) {
 		waitForReady(function() {
 			send(
 				JSON.stringify({
 					"type": "getProblem",
+					"session": self.session,
 					"pid": pid
 				}), callback
 			);
@@ -104,6 +153,7 @@ var backend = function() {
 			send(
 				JSON.stringify({
 					"type": "getProblems",
+					"session": self.session
 				}), callback
 			);
 		});
@@ -113,6 +163,7 @@ var backend = function() {
 			send(
 				JSON.stringify({
 					"type": "getContests",
+					"session": self.session
 				}), callback
 			);
 		});
@@ -122,11 +173,12 @@ var backend = function() {
 			send(
 				JSON.stringify({
 					"type": "addProblem",
+					"session": self.session,
 					"name": name,
 					"description": desc,
 					"input": input,
 					"output": output,
-					"session": session,
+					"upload_session": session,
 					"num_case": num_case,
 					"problem_type": type
 				}), callback
@@ -138,12 +190,13 @@ var backend = function() {
       send(
         JSON.stringify({
           "type": "editProblem",
+          "session": self.session,
           "pid": pid,
           "name": name,
           "description": desc,
           "input": input,
           "output": output,
-          "session": session,
+          "upload_session": session,
           "num_case": num_case,
           "problem_type": type
         }), callback
@@ -157,6 +210,7 @@ var backend = function() {
 			send(
 				JSON.stringify({
 					"type": "addContest",
+					"session": self.session,
 					"name": name,
 					"begin": begin,
 					"end": end,
@@ -170,7 +224,7 @@ var backend = function() {
 			send(
 				JSON.stringify({
 				  "type": "submitCode",
-					"username": username,
+					"session": self.session,
 					"code": code,
 					"pid": pid
 				}), callback

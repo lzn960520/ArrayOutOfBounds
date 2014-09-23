@@ -7,6 +7,7 @@ function doAddContest() {
     function(result) {
       if (result.success) {
         popup_noti("Add contest successfully");
+        doGetContests();
       } else {
         popup_noti("<span style='color:red'>Add contest failed: " + result.reason + "</span>");
       }

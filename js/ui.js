@@ -1,11 +1,17 @@
 function switchNAV(value) {
-  if (value==0){
+  if (value == 0){
     $("#header #before-login").css("display","inline-block");
     $("#header #after-login").css("display","none");
   } else {
     $("#header #before-login").css("display","none");
     $("#header #after-login").css("display","inline-block");
   }
+}
+function isNAV(value) {
+  if ($("#header #before-login").css("display") == "inline-block")
+    return 0;
+  else
+    return 1;
 }
 function switchGUI(value) {
   $(".ui").hide();

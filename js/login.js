@@ -13,6 +13,8 @@ function doLogin() {
         switchGUI("problems");
         switchNAV(1);
         $("#after-login #username").html(result.username);
+        backend.username = result.username;
+        backend.loginLevel = result.loginLevel;
         $.cookie("username", result.username);
         popup_noti("<i>Login successful</i>");
       } else {
@@ -34,8 +36,8 @@ function doRegister() {
       if (result.success) {
         switchGUI("problems");
         switchNAV(1);
-        $("#after-login #username").html(username);
-        $.cookie("username", username);
+        $("#after-login #username").html(result.username);
+        $.cookie("username", result.username);
         popup_noti("<i>Registration successful</i>");
       } else {
         popup_noti("<span style='color:red'>Registration failed: " + result.reason + "</span>");
@@ -44,6 +46,13 @@ function doRegister() {
   $("#reg-div").fadeOut(300);
   return false;
 };
+function doLogout() {
+  backend.logout(function(result) {
+    $.removeCookie("username");
+    popup_noti("Logout successful");
+    switchNAV(0);
+  });
+}
 $(function() {
   $("#login-div").click(function(e) {
     e.stopPropagation();
@@ -61,13 +70,7 @@ $(function() {
     toggleSignup();
     $("#reg-div #username").focus();
     $("#login-div").fadeOut(300);
-    e.stopPropagation(); 
-  });
-  $("#logout").click(function() {
-    $.removeCookie("username");
-    popup_noti("Logout successful");
-    switchGUI("welcome");
-    switchNAV(0);
+    e.stopPropagation();
   });
   $(document).click(function(e) {
     $("#login-div").fadeOut(300);
@@ -81,10 +84,9 @@ $(function() {
     if (e.keyCode == 13)
       $("#reg-btn").click();
   });
-  if ($.cookie("username") != null) {
+  if ($.cookie("username")) {
     switchNAV(1);
     $("#after-login #username").html($.cookie("username"));
-  } else {
+  } else
     switchNAV(0);
-  }
 });
