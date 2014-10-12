@@ -1,0 +1,222 @@
+body {
+	background-color: #c4dcf5;
+}
+
+#header {
+	background: url("../img/background.jpg");
+	width: 100%;
+	height: 50px;
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	z-index: 1;
+	overflow: hidden;
+}
+
+#header input {
+	border-width: 0;
+	border-radius: 17px;
+	height: 34px;
+	padding-left: 20px;
+	padding-right: 20px;
+	width: 100%;
+}
+
+#header #logo {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	display: inline-block;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	user-select: none;
+	font-family: 'Ubuntu Mono';
+	font-style: italic;
+	font-weight: 700;
+	font-size: 40px;
+	color: #fff;
+	margin-left: 10px;
+	line-height: 45px;
+}
+
+#header .logintool {
+	height: 100%;
+	padding: 8px 0;
+}
+
+#header button {
+	height: 100%;
+	line-height: 100%;
+}
+
+#header #after-login #username {
+	color: #fff;
+	font-size: 20px;
+	vertical-align: middle;
+	margin: 0 4px;
+}
+
+#main {
+	padding-top: 50px;
+	padding-left: 150px;
+	width: 100%;
+	height: 100%;
+}
+
+#left {
+	z-index: 1;
+	width: 150px;
+	position: fixed;
+	top: 50px;
+	left: 0;
+}
+
+#main #body {
+	width: 100%;
+	padding: 2%;
+	height: 100%;
+	overflow: auto;
+}
+
+.tab-list {
+	background-color: #8bb9e9;
+	height: 100%;
+}
+
+.tab-list .tab {
+	position: relative;
+	font-family: 'Ubuntu Mono';
+	color: #fff;
+	font-size: 23px;
+	font-weight: 700;
+	min-height: 35px;
+	line-height: 35px;
+	text-align: center;
+	vertical-align: center;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	word-wrap: break-word;
+	user-select: none;
+	border-width: 0 0 1px 0;
+	border-style: solid;
+	border-color: black;
+	border-collapse: collapse;
+}
+
+.tab-list .tab-close-btn {
+	display: none;
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	width: 16px;
+	height: 16px;
+	background-image: url(../img/tab-close-btn.png);
+}
+
+.tab-list .tab:hover {
+	color: #fff;
+	background-color: #c4dcf5;
+}
+
+.tab-list .tab.selected {
+	color: #000;
+	background-color: #c4dcf5;
+}
+
+.tab-list .tab.selected .tab-close-btn {
+	display: block;
+}
+
+.popup {
+	position: absolute;
+	top: 70px;
+	border-radius: 10px;
+	right: 2%;
+	width: 25%;
+	min-width: 350px;
+	background-color: #8bb9e9;
+	color: white;
+}
+
+#login-div {
+	height: 170px
+}
+
+#reg-div {
+	height: 220px
+}
+
+.popup div {
+	margin: 20px;
+	height: 30px;
+}
+
+.popup-form button {
+	margin-left: auto;
+	margin-right: auto;
+	height: 100%;
+	line-height: 100%;
+	float: right;
+}
+
+.popup-form label {
+	width: 20%;
+	min-width: 80px;
+	text-align: right;
+	height: 30px;
+	line-height: 30px;
+}
+
+.popup-form input {
+	width: 70%;
+	display: inline-block;
+	float: right;
+	height: 100%;
+}
+
+.module {
+	width: 100%;
+	background-color: #fff;
+	border-radius: 10px;
+	padding: 20px;
+	margin-bottom: 20px;
+}
+
+.module h3 {
+	font-weight: 700;
+	font-family: Arial;
+}
+
+.noti {
+	background-color: #8bb9e9;
+	color: #fff;
+	border-radius: 10px;
+	padding: 8px 13px;
+	font-size: 20px;
+}
+
+#submit-editor {
+	margin: 0;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.table {
+	margin-top: 10px;
+}
+
+.ui {
+	width: 100%;
+}
+
+#screen {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
