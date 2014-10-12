@@ -5,14 +5,14 @@ module.exports = function(env) {
       env.initSession(session, function() {
         res.success({
           "set_session": session,
-          "loginLevel": 0,
-          "username": null
+          "role": "nologin",
+          "username": ""
         });
       });
     } else {
       res.success({
         "set_session": req.data.session,
-        "loginLevel": req.session.loginLevel,
+        "role": req.session.role,
         "username": req.session.username
       });
     }

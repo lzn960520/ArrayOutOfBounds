@@ -19,7 +19,7 @@ module.exports = function(env) {
     req.db.collection("contests", { safe: true, strict: true }, function(err, collection) {
       if (err)
         throw new Error(err);
-      collection.find({}).toArray(function(err, docs) {
+      collection.find({}, { "problems": 0, "_id": 0 }).toArray(function(err, docs) {
         if (err)
           throw new Error(err);
         var len = docs.length;
@@ -45,18 +45,6 @@ module.exports = function(env) {
   }
   
   function handleAddContest(req, res) {
-    if (!req.session) {
-      res.resession();
-      return;
-    }
-    if (req.session.loginLevel == 0) {
-      res.fail("You need login first");
-      return;
-    }
-    if (req.session.loginLevel == 1) {
-      res.fail("You don't have privilege to add contest");
-      return;
-    }
     req.db.collection('contests', { safe: true, strict: true }, function(err, collection) {               
       if (err)
         throw new Error(err);

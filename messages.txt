@@ -1,0 +1,13 @@
+getContests
+getContest
+addContest
+getProblems
+getProblem
+addProblem
+editProblem
+removeProblem
+submitCode
+openSession
+login
+register
+logout

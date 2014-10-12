@@ -15,11 +15,11 @@ module.exports = function(env) {
         else if (docs[0].password != req.data.password)
           res.fail("Password is not correct");
         else {
-          res.session.loginLevel = docs[0].level;
+          res.session.role = docs[0].role;
           res.session.username = docs[0].username;
           res.success({
             "username": docs[0].username,
-            "loginLevel": docs[0].level
+            "role": docs[0].role
           });
         }
       });
@@ -46,7 +46,7 @@ module.exports = function(env) {
             collection.insert({
               "username": username,
               "password": password,
-              "level": 1
+              "role": "user"
             }, {safe:true}, function(err, result) {
               if (err)
                 throw new Error(err);
@@ -63,12 +63,15 @@ module.exports = function(env) {
     if (!req.session)
       res.resession();
     res.session.username = "";
-    res.session.loginLevel = 0;
-    res.success();
+    res.session.role = "nologin";
+    res.success({
+      "username": "",
+      "role": "nologin"
+    });
   }
   
   env.registerHandler("login", handleLogin);
   env.registerHandler("register", handleRegister);
   env.registerHandler("logout", handleLogout);
-  env.registerDefaultSession({ "username": "", "loginLevel": 0 });
+  env.registerDefaultSession({ "username": "", "role": "nologin" });
 }
