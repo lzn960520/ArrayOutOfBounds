@@ -1,0 +1,19 @@
+{
+  "name": "OutOfBounds",
+  "version": "0.0.0",
+  "authors": [
+    "rododo <lzn960520@126.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angularjs": "~1.3.0"
+  }
+}
