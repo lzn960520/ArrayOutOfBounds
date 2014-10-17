@@ -1,5 +1,3 @@
-var _currentGUI = "";
-var onactive = {};
 var editor_session = {};
 function switchNAV(value) {
   if (value == 0) {
@@ -16,18 +14,6 @@ function isNAV(value) {
   else
     return value == 1;
 }
-function switchGUI(value) {
-  $(".ui").hide();
-  $(".tab").removeClass("selected");
-  $("#ui-" + value).show();
-  if (onactive[value])
-    onactive[value]();
-  $("#tab-" + value).addClass("selected");
-  _currentGUI = value;
-}
-function currentGUI() {
-  return _currentGUI;
-}
 function deleteGUI(value) {
   if ($("#tab-" + value).hasClass("selected"))
     switchGUI("welcome");
@@ -42,10 +28,10 @@ function disableTab(value) {
   if ($("#tab-" + value).hasClass("selected"))
     switchGUI("welcome");
 }
-function addTab(id, name) {
+function addTab(id, name, url) {
   $("#left").append(
-      "<div class='tab' id='tab-" + id + "'>" + name +
-          "<span class='tab-close-btn'></span>" + "</div>");
+      "<a href='" + url + "'><div class='tab'>" + name +
+          "<span class='tab-close-btn'></span>" + "</div></a>");
 }
 function showConfirm(title, content, yescallback, nocallback, yesclass, noclass) {
   $("#confirm-modal #title").html(title);
@@ -67,12 +53,26 @@ function showConfirm(title, content, yescallback, nocallback, yesclass, noclass)
 $(function() {
   $(".popup").hide();
   $(".ui").hide();
-  $(".tab").hide();
-  $("body").delegate(".tab", 'click', function(e) {
-    switchGUI(e.currentTarget.id.substring(4));
-  });
   $("body").delegate(".tab-close-btn", "click", function(e) {
     deleteGUI(e.currentTarget.parentElement.id.substring(4));
     e.stopPropagation();
   });
 });
+app.controller("tabs_ctrl", [ "$scope", "$location", function($scope, $location) {
+  $scope.tabs = [
+    {
+      url: "/welcome",
+      name: "Welcome"
+    }, {
+      url: "/problems",
+      name: "Problems"
+    }
+  ];
+  
+  $scope.setURL = function(url) {
+    $location.path(url);
+  };
+  $scope.isURL = function(url) {
+    return $location.path() == url;
+  }
+}]);

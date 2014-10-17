@@ -1,0 +1,20 @@
+<strong style="font-size: 40px"><em> Welcome to
+    Out of Bounds </em></strong>
+<div id="newest-contests-div" class="module">
+  <h3>Newest Contests</h3>
+  <table id="newest-contests-table" style="margin-top: 40px"
+    class="table table-striped">
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Begin time</th>
+      <th>End time</th>
+    </tr>
+    <tr ng-repeat="contest in contests | limitTo: 3 | orderBy: ['begintime', 'name']">
+      <td>{{contest.id}}</td>
+      <td>{{contest.name}}</td>
+      <td>{{contest.begintime | date: "yyyy-MM-dd hh:mm:ss"}}</td>
+      <td>{{contest.endtime | date: "yyyy-MM-dd hh:mm:ss"}}</td>
+    </tr>
+  </table>
+</div>

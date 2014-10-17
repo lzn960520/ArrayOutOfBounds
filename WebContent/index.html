@@ -1,33 +1,28 @@
 <!doctype html>
-<html>
-
+<html ng-app="outofbounds">
 <head>
 <meta charset="utf-8">
 <meta mame="renderer" content="webkit">
 <title>Out of Bounds</title>
 <link rel="stylesheet" href="fonts/ubuntumono/font.css">
-<link rel="stylesheet" href="css/bootstrap.min.css">
-<link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+<link rel="stylesheet" href="libs/bootstrap/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="css/index.css">
-<link rel="stylesheet" href="css/jquery.fileupload.css">
-<script src="js/jquery.min.js"></script>
-<script src="js/jquery.cookie.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/bootstrap-datetimepicker.min.js"></script>
+<link rel="stylesheet" href="libs/jquery-fileuploader/css/fileUploader.css">
+<script type="text/javascript" src="libs/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="libs/jquery-cookie/jquery.cookie.js"></script>
+<script type="text/javascript" src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="libs/ace-builds/src-min-noconflict/ace.js"></script>
+<script type="text/javascript" src="libs/angular/angular.min.js"></script>
+<script type="text/javascript" src="libs/angular-ui-ace/ui-ace.min.js"></script>
+<script type="text/javascript" src="libs/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script type="text/javascript" src="libs/jquery-fileuploader/js/jquery.fileUploader.js"></script>
+<script src="libs/angular-route/angular-route.min.js"></script>
+<script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/backend.js"></script>
-<script src="js/ace/ace.js"></script>
-<script src="js/vendor/jquery.ui.widget.js"></script>
-<script src="js/jquery.iframe-transport.js"></script>
-<script src="js/jquery.fileupload.js"></script>
 <script src="js/login.js"></script>
-<script>
-  $(document).ready(function() {
-    enableTab("welcome");
-    switchGUI("welcome");
-  });
-</script>
+<script src="js/contest.js"></script>
 <style type="text/css" id="inject-style"></style>
 </head>
 
@@ -148,7 +143,7 @@
   </div>
   <!-- /.modal -->
   <div class="modal fade" id="add-contest-modal" tabindex="-1"
-    role="dialog" aria-labelledby="label" aria-hidden="true">
+    role="dialog" aria-labelledby="label" aria-hidden="true" ng-controller="add_contest_ctrl">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -162,29 +157,14 @@
           <div class="form-group"
             style="width: 48%; display: inline-block">
             <label for="begintime">Begin time</label>
-            <div class="userinput" id="begintime"></div>
-            <script>
-              $("#begintime").datetimepicker({
-                format : "yyyy-mm-dd hh:ii",
-                autoclose : true,
-                startDate : new Date(),
-              });
-              $("#begintime .datetimepicker").css(
-                "margin",
-                "0 auto");
-            </script>
+            <datepicker show-weeks="false" ng-model="begindate"></datepicker>
+            <timepicker minute-step="15" show-meridian="false" ng-model="begintime"></timepicker>
           </div>
           <div class="form-group"
             style="width: 48%; float: right; display: inline-block">
             <label style="margin: 0 auto" for="endtime">End time</label>
-            <div class="userinput" id="endtime"></div>
-            <script>
-              $("#endtime").datetimepicker({
-                format : "yyyy-mm-dd hh:ii",
-                autoclose : true,
-              });
-              $("#endtime .datetimepicker").css("margin", "0 auto");
-            </script>
+            <datepicker show-weeks="false" ng-model="enddate"></datepicker>
+            <timepicker minute-step="15" show-meridian="false" ng-model="endtime"></timepicker>
           </div>
           <div class="form-group">
             <label for="problems">Problems</label> <input id="problems"
@@ -234,48 +214,14 @@
       </div>
     </div>
     <div id="left" class="tab-list"
-      onselectstart="javascript:return false;">
-      <div class="tab selected" id="tab-welcome">Welcome</div>
-      <div class="tab" id="tab-problems">Problems</div>
-      <div class="tab" id="tab-contests">Contests</div>
-      <div class="tab" id="tab-problem">Problem</div>
-      <div class="tab" id="tab-submit">Submit</div>
+      onselectstart="javascript:return false;" ng-controller="tabs_ctrl">
+      <div ng-repeat="tab in tabs" ng-click="setURL(tab.url)" ng-class="{'tab': true, 'selected': isURL(tab.url)}">
+        {{tab.name}}
+      </div>
     </div>
     <div id="main">
       <div id="body">
-        <div class="ui" id="ui-welcome">
-          <strong style="font-size: 40px"><em> Welcome to
-              Out of Bounds </em></strong>
-          <div id="newest-contests-div" class="module">
-            <h3>Newest Contests</h3>
-            <table id="newest-contests-table" style="margin-top: 40px"
-              class="table table-striped">
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Begin time</th>
-                <th>End time</th>
-              </tr>
-            </table>
-          </div>
-        </div>
-        <div class="ui" id="ui-problems">
-          <div id="problems-div" class="module">
-            <h3>Problems</h3>
-            <div style="margin-top: 30px">
-              <button class="btn btn-default need-admin"
-                id="add-problem-btn"
-                style="margin-left: 90%; width: 10%"
-                onclick="showAddProblem();">Add</button>
-              <table id="problems-table" class="table table-striped">
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
+        <div ng-view></div>
         <div class="ui" id="ui-contests">
           <div id="contests-div" class="module">
             <h3>Contests</h3>

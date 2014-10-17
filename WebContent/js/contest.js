@@ -43,6 +43,43 @@ function doGetContests() {
   });
 }
 
-onactive["welcome"] = doGetContests;
-onactive["contests"] = doGetContests;
-enableTab("contests");
+app.controller("add_contest_ctrl", ["$scope", function($scope) {
+  $scope.begindate = new Date();
+  $scope.enddate = $scope.begindate;
+  $scope.begintime = new Date();
+  $scope.begintime.setMinutes(Math.floor($scope.begintime.getMinutes() / 15) * 15);
+  $scope.endtime = $scope.begintime;
+  $scope.endtime.setMinutes(0);
+}]);
+app.controller("list_contest_ctrl", ["$scope", function($scope) {
+  $scope.contests = [
+    {
+      "id": "123",
+      "name": "xest",
+      "begintime": new Date(),
+      "endtime": new Date()
+    }, {
+      "id": "123",
+      "name": "uest",
+      "begintime": new Date(),
+      "endtime": new Date()
+    }, {
+      "id": "123",
+      "name": "vest",
+      "begintime": new Date(),
+      "endtime": new Date()
+    }, {
+      "id": "123",
+      "name": "west",
+      "begintime": new Date(),
+      "endtime": new Date()
+    }
+  ];
+}]);
+app.config(["$routeProvider", function($routeProvider) {
+  $routeProvider
+    .when("/welcome", {
+      templateUrl: "views/recent-contest-list.html",
+      controller: "list_contest_ctrl"
+    });
+}]);
