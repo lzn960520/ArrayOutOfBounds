@@ -1,4 +1,4 @@
-<div class='module'>
+<div class='module' ng-hide="stage()!='show'">
   <h3>{{problem.name}}</h3>
   <div style='border-top:1px solid #e5e5e5'>
     <h4>Description</h4>
@@ -12,15 +12,13 @@
     <h4>Sample output</h4>
     <pre>{{problem.output}}</pre>
   </div>
-  <button class='btn btn-success show-submit-problem-btn' pid=' + pid + ' style='margin-left:90%;width:10%'>Submit</button>
+  <button class='btn btn-success' ng-click="stage('submit')" style='margin-left:90%;width:10%'>Submit</button>
 </div>
-<div id='submit' class='module'>
+<div class='module' ng-hide="stage()!='submit'">
   <h3>Submit</h3>
-  <div style='position: relative;height:500px;margin-bottom:20px'>
-    <div id='submit-editor'></div>
-  </div>
+  <div ui-ace="{ theme: 'twilight', mode: 'c_cpp' }" style='position: relative; height: 500px; margin-bottom: 20px' ng-model='code'></div>
   <div>
-    <button style='margin-left:77%;width:10%' class='btn btn-danger cancel-submit-problem-btn' pid=' + pid + '>Cancel</button>
-    <button style='margin-left:3%;width:10%' class='btn btn-success confirm-submit-problem-btn' pid=' + pid + '>Submit</button>
+    <button class='btn btn-danger' style='margin-left: 74%; width: 10%' ng-click='cancelSubmit()'>Cancel</button>
+    <button class='btn btn-success' style='margin-left: 3%; width: 10%' ng-click='confirmSubmit()'>Submit</button>
   </div>
 </div>

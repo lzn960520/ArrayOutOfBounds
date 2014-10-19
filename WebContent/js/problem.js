@@ -26,6 +26,22 @@ app.controller("single_problem_ctrl", ["$scope", "$location", "$routeParams", fu
     "input": "input",
     "output": "output"
   }
+  _stage = 'show';
+  $scope.stage = function(stage) {
+    if (stage)
+      _stage = stage;
+    else
+      return _stage;
+  }
+  $scope.code = "";
+  $scope.cancelSubmit = function() {
+    $scope.code = "";
+    _stage = "show";
+  }
+  $scope.confirmSubmit = function() {
+    $scope.code = "";
+    _stage = 'show';
+  }
 }])
 app.config(["$routeProvider", function($routeProvider) {
   $routeProvider
