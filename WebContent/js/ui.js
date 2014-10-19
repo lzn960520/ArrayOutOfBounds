@@ -14,25 +14,6 @@ function isNAV(value) {
   else
     return value == 1;
 }
-function deleteGUI(value) {
-  if ($("#tab-" + value).hasClass("selected"))
-    switchGUI("welcome");
-  $("#ui-" + value).remove();
-  $("#tab-" + value).remove();
-}
-function enableTab(value) {
-  $("#tab-" + value).show();
-}
-function disableTab(value) {
-  $("#tab-" + value).hide();
-  if ($("#tab-" + value).hasClass("selected"))
-    switchGUI("welcome");
-}
-function addTab(id, name, url) {
-  $("#left").append(
-      "<a href='" + url + "'><div class='tab'>" + name +
-          "<span class='tab-close-btn'></span>" + "</div></a>");
-}
 function showConfirm(title, content, yescallback, nocallback, yesclass, noclass) {
   $("#confirm-modal #title").html(title);
   $("#confirm-modal #content").html(content);
@@ -59,26 +40,48 @@ $(function() {
   });
 });
 app.provider("ui", function() {
+  var that = this;
   this.tabs = [];
-  this.$get = function() {
+  this.login = {
+    role: "nologin"
+  };
+  this.$get = [ "$location", function($location) {
     return {
       addTab: this.addTab,
-      tabs: this.tabs
+      deleteTab: function(index) {
+        if (that.tabs[index].url == $location.path())
+          $location.path("/");
+        that.deleteTab(index);
+      },
+      setURL: function(url) {
+        $location.path(url);
+      },
+      isURL: function(url) {
+        return url == $location.path();
+      },
+      tabs: that.tabs,
+      login: that.login,
+      setLogin: this.setLogin
     };
-  };
-  this.addTab = function(name, url) {
-    this.tabs.push({ "url": url, "name": name });
+  }];
+  this.addTab = function(name, url, options) {
+    options = options || {};
+    for (i in this.tabs)
+      if (this.tabs[i].url == url)
+        return;
+    this.tabs.push({ "url": url, "name": name, "closable": options.closable===true ? true : false, "condition": options.condition || "true" });
+  }
+  this.deleteTab = function(index) {
+    this.tabs.splice(index, 1);
+  }
+  this.setLogin = function(login) {
+    angular.extend(this.login, login);
   }
 });
 app.controller("tabs_ctrl", [ "$scope", "$location", "ui", function($scope, $location, ui) {
-  $scope.tabs = ui.tabs;
-  $scope.addTab = function(name, url) {
-    $scope.tabs.push({"url":url, "name":name});
-  }
-  $scope.setURL = function(url) {
-    $location.path(url);
-  };
-  $scope.isURL = function(url) {
-    return $location.path() == url;
-  }
+  $scope.tabs = ui.tabs; 
+  $scope.setURL = ui.setURL;
+  $scope.isURL = ui.isURL;
+  $scope.deleteTab = ui.deleteTab;
+  $scope.login = ui.login;
 }]);

@@ -1,5 +1,3 @@
-disableTab("contests");
-
 function doAddContest() {
   backend.addContest(
       $("#add-contest-modal #name").val(),

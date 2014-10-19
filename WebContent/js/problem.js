@@ -15,7 +15,7 @@ app.controller("list_problem_ctrl", ["$scope", "$location", "ui", function($scop
     }
   ];
   $scope.openProblem = function(id, name) {
-    ui.addTab(name, "/problem/" + id);
+    ui.addTab(name, "/problem/" + id, { closable: true });
     $location.path("/problem/" + id);
   }
 }]);
