@@ -1,0 +1,26 @@
+<div class='module'>
+  <h3>{{problem.name}}</h3>
+  <div style='border-top:1px solid #e5e5e5'>
+    <h4>Description</h4>
+    <pre>{{problem.description}}</pre>
+  </div>
+  <div style='border-top:1px solid #e5e5e5'>
+    <h4>Sample input</h4>
+    <pre>{{problem.input}}</pre>
+  </div>
+  <div style='border-top:1px solid #e5e5e5'>
+    <h4>Sample output</h4>
+    <pre>{{problem.output}}</pre>
+  </div>
+  <button class='btn btn-success show-submit-problem-btn' pid=' + pid + ' style='margin-left:90%;width:10%'>Submit</button>
+</div>
+<div id='submit' class='module'>
+  <h3>Submit</h3>
+  <div style='position: relative;height:500px;margin-bottom:20px'>
+    <div id='submit-editor'></div>
+  </div>
+  <div>
+    <button style='margin-left:77%;width:10%' class='btn btn-danger cancel-submit-problem-btn' pid=' + pid + '>Cancel</button>
+    <button style='margin-left:3%;width:10%' class='btn btn-success confirm-submit-problem-btn' pid=' + pid + '>Submit</button>
+  </div>
+</div>

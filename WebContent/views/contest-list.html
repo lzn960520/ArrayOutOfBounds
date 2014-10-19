@@ -1,0 +1,23 @@
+<div class="module">
+  <h3>Contests</h3>
+  <div style="margin-top: 30px">
+    <button class="btn btn-default need-admin"
+      id="add-contest-btn"
+      style="margin-left: 90%; width: 10%" data-toggle="modal"
+      data-target="#add-contest-modal">Add</button>
+    <table id="contests-table" class="table table-striped">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Begin time</th>
+        <th>End time</th>
+      </tr>
+      <tr ng-repeat="contest in contests | orderBy: ['begintime', 'name']">
+        <td>{{contest.id}}</td>
+        <td>{{contest.name}}</td>
+        <td>{{contest.begintime | date: "yyyy-MM-dd hh:mm"}}</td>
+        <td>{{contest.endtime | date: "yyyy-MM-dd hh:mm"}}</td>
+      </tr>
+    </table>
+  </div>
+</div>

@@ -81,5 +81,13 @@ app.config(["$routeProvider", function($routeProvider) {
     .when("/welcome", {
       templateUrl: "views/recent-contest-list.html",
       controller: "list_contest_ctrl"
-    });
+    })
+    .when("/contests", {
+      templateUrl: "views/contest-list.html",
+      controller: "list_contest_ctrl"
+    })
 }]);
+app.config(["uiProvider", function(ui) {
+  ui.addTab("Welcome", "/welcome");
+  ui.addTab("Contests", "/contests");
+}])

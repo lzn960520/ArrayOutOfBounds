@@ -11,9 +11,9 @@
           <th>ID</th>
           <th>Name</th>
         </tr>
-        <tr ng-repeat="problem in problems | orderBy: 'id'">
-          <th>{{problem.id}}</th>
-          <th>{{problem.name}}</th>
+        <tr ng-repeat="problem in problems | orderBy: 'id'" ng-click="openProblem(problem.id, problem.name)">
+          <td>{{problem.id}}</td>
+          <td>{{problem.name}}</td>
         </tr>
       </table>
     </div>

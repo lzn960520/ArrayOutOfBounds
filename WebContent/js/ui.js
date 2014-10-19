@@ -58,17 +58,23 @@ $(function() {
     e.stopPropagation();
   });
 });
-app.controller("tabs_ctrl", [ "$scope", "$location", function($scope, $location) {
-  $scope.tabs = [
-    {
-      url: "/welcome",
-      name: "Welcome"
-    }, {
-      url: "/problems",
-      name: "Problems"
-    }
-  ];
-  
+app.provider("ui", function() {
+  this.tabs = [];
+  this.$get = function() {
+    return {
+      addTab: this.addTab,
+      tabs: this.tabs
+    };
+  };
+  this.addTab = function(name, url) {
+    this.tabs.push({ "url": url, "name": name });
+  }
+});
+app.controller("tabs_ctrl", [ "$scope", "$location", "ui", function($scope, $location, ui) {
+  $scope.tabs = ui.tabs;
+  $scope.addTab = function(name, url) {
+    $scope.tabs.push({"url":url, "name":name});
+  }
   $scope.setURL = function(url) {
     $location.path(url);
   };
