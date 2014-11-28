@@ -28,19 +28,11 @@ module.exports = function(env) {
     req.db.collection("problems", { safe: true, strict: true }, function(err, collection){
       if (err)
         throw new Error(err);
-      collection.find({ pid: req.data.pid }).toArray(function(err, docs){
+      collection.find({ pid: req.data.pid }, { "_id": 0, "num_cases": 0 }).toArray(function(err, docs){
         if (err)
           throw new Error(err);
         var thisproblem = docs[0];
-        res.success({
-          "name": thisproblem.name,
-          "pid": thisproblem.pid,
-          "description": thisproblem.description,
-          "input": thisproblem.input,
-          "output": thisproblem.output,
-          "num_case": thisproblem.num_case,
-          "problem_type": thisproblem.type
-        });               
+        res.success(thisproblem);               
       });
     });
   }
@@ -49,20 +41,12 @@ module.exports = function(env) {
     req.db.collection("problems", { safe: true, strict: true }, function(err, collection){
       if (err)
         throw new Error(err);
-      collection.find({}, {"name": 1, "pid": 1, "_id": 0}).toArray(function(err, docs){
+      collection.find({}, { "name": 1, "pid": 1, "_id": 0 }).toArray(function(err, docs){
         if (err)
           throw new Error(err);
-        var len = docs.length;
-        var name = new Array(len);
-        var pid = new Array(len);
-        for (var i = 0; i < len; i++) {
-          name[i] = docs[i].name;
-          pid[i] = docs[i].pid;
-        }
         res.success({
-          "name": name,
-          "pid": pid,
-          "length": name.length
+          "problems": docs,
+          "length": docs.length
         });               
       });
     });

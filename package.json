@@ -8,6 +8,6 @@
 		"mongodb": "*",
 		"body-parser": "*",
 		"connect-multiparty": "*",
-		"ws": "*"
+		"socket.io": ">= 1.1.0"
 	}
 }

@@ -51,7 +51,8 @@ module.exports = function(env) {
               if (err)
                 throw new Error(err);
               res.success({
-                "username": username
+                "username": username,
+                "role": "user"
               });
             });
           }
@@ -60,8 +61,6 @@ module.exports = function(env) {
   }
   
   function handleLogout(req, res) {
-    if (!req.session)
-      res.resession();
     res.session.username = "";
     res.session.role = "nologin";
     res.success({

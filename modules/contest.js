@@ -22,23 +22,9 @@ module.exports = function(env) {
       collection.find({}, { "problems": 0, "_id": 0 }).toArray(function(err, docs) {
         if (err)
           throw new Error(err);
-        var len = docs.length;
-        var name = new Array(len);
-        var cid = new Array(len);
-        var begin = new Array(len);
-        var end = new Array(len);
-        for (var i = 0; i < len; i++){
-          name[i] = docs[i].name;
-          cid[i] = docs[i].cid;
-          begin[i] = docs[i].begin;
-          end[i] = docs[i].end;
-        }
         res.success({
-          "length": len,
-          "name": name,
-          "cid": cid,
-          "begin": begin,
-          "end":end,
+          "length": docs.length,
+          "contests": docs
         });               
       });
     });

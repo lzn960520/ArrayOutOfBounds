@@ -93,19 +93,17 @@ db.open(function(err, db) {
                     res.resession();
                   } else if (permissionManager.granted(req, res))
                     handles[data.type](req, res);
+                  else
+                    res.fail("Permission denied");
                 });
               });
             } else
               console.log("Unknown message " + JSON.stringify(data));
           });
         }
-        var WebSocketServer = require('ws').Server;
-        var wss = new WebSocketServer({ port: 805 },
-          function () {
-            wss.on('close', onclose);
-            wss.on('connection', onconnection);
-          }
-        );
+        var SocketIOServer = require('socket.io')(8005);
+        SocketIOServer.on('connection', onconnection);
+        SocketIOServer.on('close', onclose);
       })
     });
   });
