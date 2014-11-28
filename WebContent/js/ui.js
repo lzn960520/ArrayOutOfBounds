@@ -42,9 +42,6 @@ $(function() {
 app.provider("ui", function() {
   var that = this;
   this.tabs = [];
-  this.login = {
-    role: "nologin"
-  };
   this.$get = [ "$location", function($location) {
     return {
       addTab: this.addTab,
@@ -61,7 +58,6 @@ app.provider("ui", function() {
       },
       tabs: that.tabs,
       login: that.login,
-      setLogin: this.setLogin
     };
   }];
   this.addTab = function(name, url, options) {
@@ -74,14 +70,30 @@ app.provider("ui", function() {
   this.deleteTab = function(index) {
     this.tabs.splice(index, 1);
   }
-  this.setLogin = function(login) {
-    angular.extend(this.login, login);
-  }
 });
-app.controller("tabs_ctrl", [ "$scope", "$location", "ui", function($scope, $location, ui) {
+app.controller("tabs_ctrl", [ "$scope", "$location", "ui", "backend", function($scope, $location, ui, backend) {
   $scope.tabs = ui.tabs; 
   $scope.setURL = ui.setURL;
   $scope.isURL = ui.isURL;
   $scope.deleteTab = ui.deleteTab;
-  $scope.login = ui.login;
+  $scope.login = backend.login;
+  backend.loginNotifier.then(null, null, function(login) {
+    $scope.login = login;
+  })
+}]);
+app.controller("header_ctrl", [ "$scope", "backend", function($scope, backend) {
+  $scope.login = backend.login;
+  $scope.logout = function() {
+    backend.doLogout(function() {
+      if (result.success) {
+        popup_noti("<i>Logout successful</i>");
+      } else {
+        popup_noti("<span style='color:red'>Logout failed: " + result.reason +
+            "</span>");
+      }
+    })
+  }
+  backend.loginNotifier.then(null, null, function(login) {
+    $scope.login = login;
+  })
 }]);

@@ -1,22 +1,16 @@
-app.controller("list_problem_ctrl", ["$scope", "$location", "ui", function($scope, $location, ui) {
+app.controller("list_problem_ctrl", ["$scope", "$location", "ui", "backend", function($scope, $location, ui, backend) {
   $scope.problems = [
-    {
-      "id": "123",
-      "name": "xest",
-    }, {
-      "id": "123",
-      "name": "uest",
-    }, {
-      "id": "123",
-      "name": "vest",
-    }, {
-      "id": "123",
-      "name": "west",
-    }
   ];
+  backend.getProblems(function(data) {
+    $scope.problems = data.problems;
+    $scope.$apply();
+  });
   $scope.openProblem = function(id, name) {
     ui.addTab(name, "/problem/" + id, { closable: true });
     $location.path("/problem/" + id);
+  }
+  $scope.addProblem = function() {
+    ui.addTab("Add problem", "/problem/add", { closable: true });
   }
 }]);
 app.controller("single_problem_ctrl", ["$scope", "$location", "$routeParams", function($scope, $location, $routeParams) {

@@ -5,14 +5,14 @@
       <button class="btn btn-default need-admin"
         id="add-problem-btn"
         style="margin-left: 90%; width: 10%"
-        onclick="showAddProblem();">Add</button>
+        ng-click="addProblem();">Add</button>
       <table id="problems-table" class="table table-striped">
         <tr>
           <th>ID</th>
           <th>Name</th>
         </tr>
-        <tr ng-repeat="problem in problems | orderBy: 'id'" ng-click="openProblem(problem.id, problem.name)">
-          <td>{{problem.id}}</td>
+        <tr ng-repeat="problem in problems | orderBy: 'pid'" ng-click="openProblem(problem.pid, problem.name)">
+          <td>{{problem.pid}}</td>
           <td>{{problem.name}}</td>
         </tr>
       </table>

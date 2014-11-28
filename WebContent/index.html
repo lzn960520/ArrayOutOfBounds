@@ -7,16 +7,22 @@
 <link rel="stylesheet" href="fonts/ubuntumono/font.css">
 <link rel="stylesheet" href="libs/bootstrap/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="css/index.css">
-<link rel="stylesheet" href="libs/jquery-fileuploader/css/fileUploader.css">
+<link rel="stylesheet"
+  href="libs/jquery-fileuploader/css/fileUploader.css">
 <script type="text/javascript" src="libs/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="libs/jquery-cookie/jquery.cookie.js"></script>
-<script type="text/javascript" src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="libs/ace-builds/src-min-noconflict/ace.js"></script>
+<script type="text/javascript"
+  src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript"
+  src="libs/ace-builds/src-min-noconflict/ace.js"></script>
 <script type="text/javascript" src="libs/angular/angular.js"></script>
 <script type="text/javascript" src="libs/angular-ui-ace/ui-ace.min.js"></script>
-<script type="text/javascript" src="libs/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-<script type="text/javascript" src="libs/jquery-fileuploader/js/jquery.fileUploader.js"></script>
+<script type="text/javascript"
+  src="libs/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script type="text/javascript"
+  src="libs/jquery-fileuploader/js/jquery.fileUploader.js"></script>
 <script src="libs/angular-route/angular-route.min.js"></script>
+<script src="libs/socket.io-client/socket.io.js"></script>
 <script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/notifications.js"></script>
@@ -145,7 +151,8 @@
   </div>
   <!-- /.modal -->
   <div class="modal fade" id="add-contest-modal" tabindex="-1"
-    role="dialog" aria-labelledby="label" aria-hidden="true" ng-controller="add_contest_ctrl">
+    role="dialog" aria-labelledby="label" aria-hidden="true"
+    ng-controller="add_contest_ctrl">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -160,13 +167,15 @@
             style="width: 48%; display: inline-block">
             <label for="begintime">Begin time</label>
             <datepicker show-weeks="false" ng-model="begindate"></datepicker>
-            <timepicker minute-step="15" show-meridian="false" ng-model="begintime"></timepicker>
+            <timepicker minute-step="15" show-meridian="false"
+              ng-model="begintime"></timepicker>
           </div>
           <div class="form-group"
             style="width: 48%; float: right; display: inline-block">
             <label style="margin: 0 auto" for="endtime">End time</label>
             <datepicker show-weeks="false" ng-model="enddate"></datepicker>
-            <timepicker minute-step="15" show-meridian="false" ng-model="endtime"></timepicker>
+            <timepicker minute-step="15" show-meridian="false"
+              ng-model="endtime"></timepicker>
           </div>
           <div class="form-group">
             <label for="problems">Problems</label> <input id="problems"
@@ -187,7 +196,7 @@
   </div>
   <!-- /.modal -->
   <div id="screen">
-    <div id="header">
+    <div id="header" ng-controller="header_ctrl">
       <div
         style="display: inline-block; height: 50px; float: right; margin-right: 1%">
         <div
@@ -197,18 +206,18 @@
             type="text" placeholder="Search problem">
         </div>
         <div style="position: static; margin-left: 10px"
-          id="before-login" class="btn-group logintool">
+          id="before-login" class="btn-group logintool" ng-show="login.role=='nologin'">
           <button type="button" class="btn btn-default" id="signin">Sign
             in</button>
           <button type="button" class="btn btn-default" id="signup">Sign
             up</button>
         </div>
-        <div style="margin-left: 10px; display: none" id="after-login"
-          class="logintool">
+        <div style="display: inline-block; position: static; margin-left: 10px" id="after-login"
+          class="logintool" ng-show="login.role!='nologin'">
           <div id="username" style="display: inline-block"
-            onselectstart="javascript:return false;"></div>
-          <button type="button" onclick="doLogout();"
-            class="btn btn-danger" id="logout">Log out</button>
+            onselectstart="javascript:return false;">{{login.username}}</div>
+          <button type="button" ng-click="logout()"
+            class="btn btn-danger">Log out</button>
         </div>
       </div>
       <div id="logo">
@@ -217,55 +226,57 @@
     </div>
     <div id="left" class="tab-list"
       onselectstart="javascript:return false;" ng-controller="tabs_ctrl">
-      <div ng-repeat="tab in tabs" ng-click="setURL(tab.url)" ng-class="{'tab': true, 'selected': isURL(tab.url)}" ng-show={{tab.condition}}>
-        {{tab.name}}
-        <span class='tab-close-btn' ng-hide='tab.closable!=true' ng-click='deleteTab($index)'></span>
+      <div ng-repeat="tab in tabs" ng-click="setURL(tab.url)"
+        ng-class="{'tab': true, 'selected': isURL(tab.url)}"
+        ng-show={{tab.condition}}>
+        {{tab.name}} <span class='tab-close-btn'
+          ng-hide='tab.closable!=true' ng-click='deleteTab($index)'></span>
       </div>
     </div>
     <div id="main">
       <div id="body">
         <div ng-view></div>
       </div>
-      <div class="popup popup-form" id="login-div">
-        <form id="login-form" onsubmit="return doLogin();">
-          <div>
-            <label class="control-label">Username</label> <input
-              type="text" class="form-control" id="username"
-              placeholder="Username" autocomplete="on">
-          </div>
-          <div>
-            <label class="control-label">Password</label> <input
-              type="password" class="form-control" id="password"
-              placeholder="Password" autocomplete="on">
-          </div>
-          <div>
-            <button type="submit" id="login-btn" class="btn btn-default">Sign
-              in</button>
-          </div>
-        </form>
+      <div class="popup popup-form" id="login-div"
+        ng-controller="login_ctrl">
+        <div>
+          <label class="control-label">Username</label> <input
+            type="text" class="form-control" ng-model="username"
+            placeholder="Username" autocomplete="on">
+        </div>
+        <div>
+          <label class="control-label">Password</label> <input
+            type="password" class="form-control" ng-model="password"
+            placeholder="Password" autocomplete="on"
+            ng-keydown="$event.keyCode==13 && login();">
+        </div>
+        <div>
+          <button ng-click="login()" class="btn btn-default">Sign
+            in</button>
+        </div>
       </div>
-      <div class="popup popup-form" id="reg-div">
-        <form id="reg-form" onsubmit="return doRegister();">
-          <div>
-            <label class="control-label">Username</label> <input
-              type="text" class="form-control" id="username"
-              placeholder="Username">
-          </div>
-          <div>
-            <label class="control-label">Password</label> <input
-              type="password" class="form-control" id="password"
-              placeholder="Password">
-          </div>
-          <div>
-            <label class="control-label">Confirm</label> <input
-              type="password" class="form-control" id="password2"
-              placeholder="Password">
-          </div>
-          <div>
-            <button type="submit" id="reg-btn" class="btn btn-default">Sign
-              up</button>
-          </div>
-        </form>
+      <div class="popup popup-form" id="reg-div"
+        ng-controller="login_ctrl">
+        <div>
+          <label class="control-label">Username</label> <input
+            type="text" class="form-control" ng-model="username"
+            placeholder="Username">
+        </div>
+        <div>
+          <label class="control-label">Password</label> <input
+            type="password" class="form-control" ng-model="password"
+            placeholder="Password">
+        </div>
+        <div>
+          <label class="control-label">Confirm</label> <input
+            type="password" class="form-control" ng-model="password2"
+            placeholder="Password"
+            ng-keydown="$event.keyCode == 13 && register();">
+        </div>
+        <div>
+          <button ng-click="register()" class="btn btn-default">Sign
+            up</button>
+        </div>
       </div>
     </div>
   </div>

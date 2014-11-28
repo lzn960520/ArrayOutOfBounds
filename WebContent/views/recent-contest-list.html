@@ -12,10 +12,10 @@
       <th>End time</th>
     </tr>
     <tr ng-repeat="contest in contests | limitTo: 3 | orderBy: ['begintime', 'name']">
-      <td>{{contest.id}}</td>
+      <td>{{contest.cid}}</td>
       <td>{{contest.name}}</td>
-      <td>{{contest.begintime | date: "yyyy-MM-dd hh:mm:ss"}}</td>
-      <td>{{contest.endtime | date: "yyyy-MM-dd hh:mm:ss"}}</td>
+      <td>{{contest.begin | date: "yyyy-MM-dd hh:mm:ss"}}</td>
+      <td>{{contest.end | date: "yyyy-MM-dd hh:mm:ss"}}</td>
     </tr>
   </table>
 </div>

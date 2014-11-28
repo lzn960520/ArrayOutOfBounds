@@ -49,29 +49,12 @@ app.controller("add_contest_ctrl", ["$scope", function($scope) {
   $scope.endtime = $scope.begintime;
   $scope.endtime.setMinutes(0);
 }]);
-app.controller("list_contest_ctrl", ["$scope", function($scope) {
+app.controller("list_contest_ctrl", [ "$scope", "backend", function($scope, backend) {
+  backend.getContests(function(data) {
+    $scope.contests = data.contests;
+    $scope.$apply();
+  })
   $scope.contests = [
-    {
-      "id": "123",
-      "name": "xest",
-      "begintime": new Date(),
-      "endtime": new Date()
-    }, {
-      "id": "123",
-      "name": "uest",
-      "begintime": new Date(),
-      "endtime": new Date()
-    }, {
-      "id": "123",
-      "name": "vest",
-      "begintime": new Date(),
-      "endtime": new Date()
-    }, {
-      "id": "123",
-      "name": "west",
-      "begintime": new Date(),
-      "endtime": new Date()
-    }
   ];
 }]);
 app.config(["$routeProvider", function($routeProvider) {
