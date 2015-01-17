@@ -18,7 +18,7 @@ permissionManager.prototype.granted = function(req, res) {
   if (!req.session.role || !this.roles[req.session.role])
     res.fail("Unknown role " + req.session.role);
   else if (!this.roles[req.session.role].granted(req, res))
-    res.fail("Access denied");
+    res.fail("Permission denied");
   else
     return true;
 }
