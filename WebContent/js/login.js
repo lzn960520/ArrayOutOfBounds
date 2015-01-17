@@ -38,9 +38,9 @@ $(function() {
 app.controller("login_ctrl", [ "$scope", "backend", function($scope, backend) {
   $scope.username = "";
   $scope.password = "";
-  backend.loginNotifier.then(function(login) {
-    $.getScript("js/role_" + login.role + ".js");
-  })
+  $scope.$watch("loginInfo", function() {
+    $.getScript("js/role_" + $scope.loginInfo.role + ".js");
+  }, true);
   $scope.login = function() {
     backend.doLogin($scope.username, $scope.password, function(result) {
       if (result.success) {

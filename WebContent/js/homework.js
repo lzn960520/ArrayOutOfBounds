@@ -9,7 +9,7 @@ app.controller("list_homework_ctrl", [ "$scope", "$location", "ui", function($sc
     }
   ];
   $scope.openHomework = function(id) {
-    ui.addTab(id, "/homework/" + id, { closable: true });
+    ui.addTab(id, "/homework/" + id, { condition: "loginInfo.role=='student'", closable: true });
     $location.path("/homework/" + id);
   }
 }]);
@@ -49,5 +49,5 @@ app.config(["$routeProvider", function($routeProvider) {
     })
 }]);
 app.config(["uiProvider", function(ui) {
-  ui.addTab("Homeworks", "/homeworks", { condition: "login.role=='student'" });
+  ui.addTab("Homeworks", "/homeworks", { condition: "loginInfo.role=='student'" });
 }])

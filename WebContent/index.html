@@ -24,9 +24,8 @@
 <script src="libs/angular-route/angular-route.min.js"></script>
 <script src="libs/socket.io-client/socket.io.js"></script>
 <script src="js/app.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/notifications.js"></script>
 <script src="js/backend.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/login.js"></script>
 <script src="js/contest.js"></script>
 <script src="js/problem.js"></script>
@@ -206,16 +205,16 @@
             type="text" placeholder="Search problem">
         </div>
         <div style="position: static; margin-left: 10px"
-          id="before-login" class="btn-group logintool" ng-show="login.role=='nologin'">
+          id="before-login" class="btn-group logintool" ng-show="loginInfo.role=='nologin'">
           <button type="button" class="btn btn-default" id="signin">Sign
             in</button>
           <button type="button" class="btn btn-default" id="signup">Sign
             up</button>
         </div>
         <div style="display: inline-block; position: static; margin-left: 10px" id="after-login"
-          class="logintool" ng-show="login.role!='nologin'">
+          class="logintool" ng-show="loginInfo.role!='nologin'">
           <div id="username" style="display: inline-block"
-            onselectstart="javascript:return false;">{{login.username}}</div>
+            onselectstart="javascript:return false;">{{loginInfo.username}}</div>
           <button type="button" ng-click="logout()"
             class="btn btn-danger">Log out</button>
         </div>
@@ -241,7 +240,7 @@
         ng-controller="login_ctrl">
         <div>
           <label class="control-label">Username</label> <input
-            type="text" class="form-control" ng-model="username"
+            type="text" id="username" class="form-control" ng-model="username"
             placeholder="Username" autocomplete="on">
         </div>
         <div>
@@ -259,7 +258,7 @@
         ng-controller="login_ctrl">
         <div>
           <label class="control-label">Username</label> <input
-            type="text" class="form-control" ng-model="username"
+            type="text" id="username" class="form-control" ng-model="username"
             placeholder="Username">
         </div>
         <div>

@@ -5,7 +5,7 @@
       <button class="btn btn-default need-admin"
         id="add-problem-btn"
         style="margin-left: 90%; width: 10%"
-        ng-click="addProblem();">Add</button>
+        ng-click="addProblem();" ng-show="loginInfo.role=='admin'">Add</button>
       <table id="problems-table" class="table table-striped">
         <tr>
           <th>ID</th>
