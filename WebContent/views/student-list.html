@@ -1,0 +1,13 @@
+<div id="Student List" class="module">
+  <h3>Student List</h3>
+  <table style="margin-top: 40px" class="table table-striped">
+    <tr>
+      <th>Username</th>
+      <th>Password</th>
+    </tr>
+    <tr ng-repeat="student in students">
+      <td>{{student.user}}</td>
+      <td>{{student.password}}</td>
+    </tr>
+  </table>
+</div>
