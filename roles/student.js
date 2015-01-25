@@ -7,8 +7,8 @@ role_user.prototype.granted = function(req, res) {
   case "addProblem":
   case "removeProblem":
   case "addContest":
+  case "getStudents":
     return false;
-    break;
   case "submitCode":
   case "getContests":
   case "getContest":
@@ -19,7 +19,6 @@ role_user.prototype.granted = function(req, res) {
   case "register":
   case "logout":
     return true;
-    break;
   default:
     throw new Error("Undefined message permission");
   }

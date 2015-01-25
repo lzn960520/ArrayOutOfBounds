@@ -8,8 +8,8 @@ role_nologin.prototype.granted = function(req, res) {
   case "removeProblem":
   case "addContest":
   case "submitCode":
+  case "getStudents":
     return false;
-    break;
   case "getContests":
   case "getContest":
   case "getProblems":
@@ -19,7 +19,6 @@ role_nologin.prototype.granted = function(req, res) {
   case "register":
   case "logout":
     return true;
-    break;
   default:
     throw new Error("Undefined message permission");
   }
