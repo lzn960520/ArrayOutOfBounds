@@ -35,10 +35,7 @@ $(function() {
     $("#reg-div").fadeOut(300);
   });
 });
-app.controller("login_ctrl", [
-  "$scope",
-  "backend",
-  "ui",
+app.controller("login_ctrl", [ "$scope", "backend", "ui",
   function($scope, backend, ui) {
     $scope.username = "";
     $scope.password = "";
@@ -47,22 +44,21 @@ app.controller("login_ctrl", [
         if (result.success) {
           ui.popup_noti("<i>Login successful</i>");
         } else {
-          ui.error_noti("Login failed: " + result.reason);
+          ui.popup_error("Login failed: " + result.reason);
         }
       });
       $("#login-div").fadeOut(300);
     }
     $scope.register = function() {
       if ($scope.password != $scope.password2) {
-        popup_noti("The passwords you entered must be the same");
+        ui.popup_noti("The passwords you entered must be the same");
         return false;
       }
       backend.doRegister($scope.username, $scope.password, function(result) {
         if (result.success) {
-          popup_noti("<i>Registration successful</i>");
+          ui.popup_noti("<i>Registration successful</i>");
         } else {
-          popup_noti("<span style='color:red'>Registration failed: " +
-              result.reason + "</span>");
+          ui.popup_error("Registration failed: " + result.reason);
         }
       });
       $("#reg-div").fadeOut(300);

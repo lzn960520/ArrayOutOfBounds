@@ -102,7 +102,7 @@ app.provider("ui", function() {
         return url == $location.path();
       },
       popup_noti : that.popup_noti,
-      error_noti : that.error_noti
+      popup_error : that.popup_error
     };
   } ];
   this.addTab = function(name, url, options) {
@@ -121,7 +121,7 @@ app.provider("ui", function() {
     this.tabs.splice(index, 1);
   }
   this.popup_noti = notimanager.popup;
-  this.error_noti = function(noti) {
+  this.popup_error = function(noti) {
     this.popup_noti("<span style='color:red'>" + noti + "</span>");
   }
 });
@@ -134,7 +134,7 @@ app.controller("tabs_ctrl", [
     $scope.setURL = ui.setURL;
     $scope.isURL = ui.isURL;
     $scope.deleteTab = ui.deleteTab;
-    /*$scope.$watch("loginInfo", function() {
+    $scope.$watch("loginInfo", function() {
       for (i = 0; i < $scope.tabs.length; i++) {
         if ($scope.tabs[i].closable && !$scope.$eval($scope.tabs[i].condition))
           ui.deleteTab(i--);
@@ -146,20 +146,16 @@ app.controller("tabs_ctrl", [
             $scope.$eval($scope.tabs[i].condition))
           return;
       $location.path("");
-    })*/
+    })
   } ]);
-app.controller("header_ctrl", [
-  "$scope",
-  "$location",
-  "backend",
-  function($scope, $location, backend) {
+app.controller("header_ctrl", [ "$scope", "$location", "backend", "ui",
+  function($scope, $location, backend, ui) {
     $scope.logout = function() {
       backend.doLogout(function(result) {
         if (result.success) {
-          popup_noti("<i>Logout successful</i>");
+          ui.popup_noti("<i>Logout successful</i>");
         } else {
-          popup_noti("<span style='color:red'>Logout failed: " + result.reason +
-              "</span>");
+          ui.popup_error("Logout failed: " + result.reason);
         }
       })
     }

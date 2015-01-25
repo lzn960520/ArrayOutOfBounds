@@ -51,7 +51,7 @@ app.controller("single_problem_ctrl", [
     $scope.confirmSubmit = function() {
       backend.submitCode($scope.code, function(result) {
         if (!result.success) {
-          ui.error_noti("Submit code failed: " + result.reason);
+          ui.popup_error("Submit code failed: " + result.reason);
         } else {
           if (result.score == 100) {
             ui.popup_noti("<span style='color:green'>P" + result.pid +
