@@ -65,15 +65,17 @@
       <div class="form-group">
         <label class="col-xs-2 control-label">Test cases</label>
         <div class="col-xs-10">
-          <div id="upload-btn" class="btn btn-success fileinput-button">
-            <i class="glyphicon glyphicon-plus"></i> <span
-              id="upload-info">Upload test cases...</span> <input
-              id="test-cases-upload" type="file" name="upload"
-              class="fileUploader" data-url="uploadcasefile" multiple>
+          <div action="uploadcasefile" method="post"
+            enctype="multipart/form-data">
+            <input type="file" name="filename" class="fileUpload"
+              multiple>
+            <button id="px-submit" type="submit">Upload</button>
+            <button id="px-clear" type="reset">Clear</button>
           </div>
-          <script>
-                      alert("!");
-                      $('#test-cases-upload').fileUploader();
+          <script type="text/javascript">
+                      $('.fileUpload').fileUploader({
+                        allowedExtension : 'in|ans'
+                      });
                     </script>
           <span>Case amount: <select id="num-test-cases">
               <option value="5">5</option>

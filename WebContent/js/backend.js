@@ -219,12 +219,12 @@ app.provider("backend", function() {
     });
   }
   connect();
-  this.$get = [ "$q", "$rootScope", function($q, $rootScope) {
+  this.$get = [ "$q", "$rootScope", "ui", function($q, $rootScope, ui) {
     if (!session_opened) {
       session_opened = true;
       openSession(function(result) {
         if ($rootScope.loginInfo.session != result.set_session && isNAV(1)) {
-          popup_noti("<span style='color:red'>Please login again</span>");
+          ui.popup_noti("<span style='color:red'>Please login again</span>");
         }
         $rootScope.$apply(function() {
           $rootScope.loginInfo.session = result.set_session;
