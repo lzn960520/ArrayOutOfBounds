@@ -13,9 +13,10 @@ app.controller("list_problem_ctrl", [ "$scope", "$location", "ui", "backend",
     }
     $scope.addProblem = function() {
       ui.addTab("New problem", "/problem/add", {
-        condition : "login.role=='admin'",
+        condition : "loginInfo.role=='admin'",
         closable : true
       });
+      $location.path("/problem/add");
     }
   } ]);
 app.controller("add_problem_ctrl", [ "$scope", "backend",
@@ -69,7 +70,7 @@ app.config([ "$routeProvider", function($routeProvider) {
   $routeProvider.when("/problems", {
     templateUrl : "views/problem-list.html",
     controller : "list_problem_ctrl"
-  }).when("/problems/add", {
+  }).when("/problem/add", {
     templateUrl : "views/add-problem.html",
     controller : "add_problem_ctrl"
   }).when("/problem/:id", {

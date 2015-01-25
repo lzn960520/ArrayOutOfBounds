@@ -84,9 +84,12 @@ app.provider("ui", function() {
     }
     return this;
   }();
-  this.$get = [ "$location", function($location) {
+  this.$get = [ "$location", "$rootScope", function($location, $rootScope) {
+    $rootScope.tabs = that.tabs;
     return {
-      addTab : this.addTab,
+      addTab : function(name, url, options) {
+        that.addTab(name, url, options);
+      },
       deleteTab : function(index) {
         if (that.tabs[index].url == $location.path())
           $location.path("");
@@ -98,8 +101,6 @@ app.provider("ui", function() {
       isURL : function(url) {
         return url == $location.path();
       },
-      tabs : that.tabs,
-      login : that.login,
       popup_noti : that.popup_noti,
       error_noti : that.error_noti
     };
@@ -130,11 +131,10 @@ app.controller("tabs_ctrl", [
   "ui",
   "backend",
   function($scope, $location, ui, backend) {
-    $scope.tabs = ui.tabs;
     $scope.setURL = ui.setURL;
     $scope.isURL = ui.isURL;
     $scope.deleteTab = ui.deleteTab;
-    $scope.$watch("loginInfo", function() {
+    /*$scope.$watch("loginInfo", function() {
       for (i = 0; i < $scope.tabs.length; i++) {
         if ($scope.tabs[i].closable && !$scope.$eval($scope.tabs[i].condition))
           ui.deleteTab(i--);
@@ -146,7 +146,7 @@ app.controller("tabs_ctrl", [
             $scope.$eval($scope.tabs[i].condition))
           return;
       $location.path("");
-    })
+    })*/
   } ]);
 app.controller("header_ctrl", [
   "$scope",

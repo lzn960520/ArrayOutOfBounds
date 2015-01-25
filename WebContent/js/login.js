@@ -35,36 +35,36 @@ $(function() {
     $("#reg-div").fadeOut(300);
   });
 });
-app.controller("login_ctrl", [ "$scope", "backend", function($scope, backend) {
-  $scope.username = "";
-  $scope.password = "";
-  $scope.$watch("loginInfo", function() {
-    $.getScript("js/role_" + $scope.loginInfo.role + ".js");
-  }, true);
-  $scope.login = function() {
-    backend.doLogin($scope.username, $scope.password, function(result) {
-      if (result.success) {
-        popup_noti("<i>Login successful</i>");
-      } else {
-        popup_noti("<span style='color:red'>Login failed: " + result.reason +
-            "</span>");
-      }
-    });
-    $("#login-div").fadeOut(300);
-  }
-  $scope.register = function() {
-    if ($scope.password != $scope.password2) {
-      popup_noti("The passwords you entered must be the same");
-      return false;
+app.controller("login_ctrl", [
+  "$scope",
+  "backend",
+  "ui",
+  function($scope, backend, ui) {
+    $scope.username = "";
+    $scope.password = "";
+    $scope.login = function() {
+      backend.doLogin($scope.username, $scope.password, function(result) {
+        if (result.success) {
+          ui.popup_noti("<i>Login successful</i>");
+        } else {
+          ui.error_noti("Login failed: " + result.reason);
+        }
+      });
+      $("#login-div").fadeOut(300);
     }
-    backend.doRegister($scope.username, $scope.password, function(result) {
-      if (result.success) {
-        popup_noti("<i>Registration successful</i>");
-      } else {
-        popup_noti("<span style='color:red'>Registration failed: " +
-            result.reason + "</span>");
+    $scope.register = function() {
+      if ($scope.password != $scope.password2) {
+        popup_noti("The passwords you entered must be the same");
+        return false;
       }
-    });
-    $("#reg-div").fadeOut(300);
-  }
-}]);
+      backend.doRegister($scope.username, $scope.password, function(result) {
+        if (result.success) {
+          popup_noti("<i>Registration successful</i>");
+        } else {
+          popup_noti("<span style='color:red'>Registration failed: " +
+              result.reason + "</span>");
+        }
+      });
+      $("#reg-div").fadeOut(300);
+    }
+  } ]);
