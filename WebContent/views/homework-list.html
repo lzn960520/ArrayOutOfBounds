@@ -1,17 +1,23 @@
 <div id="Homework List" class="module">
   <h3>Homework List</h3>
-  <table style="margin-top: 40px" class="table table-striped">
-    <tr>
-      <th>Module Code</th>
-      <th>Begin Time</th>
-      <th>End Time</th>
-      <th>Current Marks</th>
-    </tr>
-    <tr ng-repeat="homework in homeworks" ng-click="openHomework(homework.id)">
-      <td>{{homework.id}}</td>
-      <td>{{homework.begintime | date: "yyyy-MM-dd HH:mm"}}</td>
-      <td>{{homework.endtime | date: "yyyy-MM-dd HH:mm"}}</td>
-      <td>{{homework.score}}/{{homework.fullscore}}</td>
-    </tr>
-  </table>
+  <div style="margin-top: 30px">
+    <button class="btn btn-default" ng-click="addHomework()"
+      ng-show="loginInfo.role=='teacher'"
+      style="margin-left: 90%; width: 10%">Add</button>
+    <table class="table table-striped">
+      <tr>
+        <th>Module Code</th>
+        <th>Begin Time</th>
+        <th>End Time</th>
+        <th>Current Marks</th>
+      </tr>
+      <tr ng-repeat="homework in homeworks"
+        ng-click="openHomework(homework.id)">
+        <td>{{homework.id}}</td>
+        <td>{{homework.begintime | date: "yyyy-MM-dd HH:mm"}}</td>
+        <td>{{homework.endtime | date: "yyyy-MM-dd HH:mm"}}</td>
+        <td>{{homework.score}}/{{homework.fullscore}}</td>
+      </tr>
+    </table>
+  </div>
 </div>

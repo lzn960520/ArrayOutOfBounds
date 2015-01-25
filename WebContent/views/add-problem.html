@@ -1,8 +1,9 @@
 <div class='module'>
   <h3>Add problem</h3>
   <div class="container-fluid"
-    style='border-top: 1px solid #e5e5e5; padding-top: 10px'>
-    <form class="form-horizontal" role="form">
+    style='margin-top: 30px; border-top: 1px solid #e5e5e5; padding-top: 10px'>
+    <form action="/" method="POST" id="fileupload"
+      class="form-horizontal" role="form">
       <div class="form-group">
         <label for="name" class="col-xs-2 control-label">Name</label>
         <div class="col-xs-10">
@@ -65,27 +66,18 @@
       <div class="form-group">
         <label class="col-xs-2 control-label">Test cases</label>
         <div class="col-xs-10">
-          <div action="uploadcasefile" method="post"
-            enctype="multipart/form-data">
-            <input type="file" name="filename" class="fileUpload"
-              multiple>
-            <button id="px-submit" type="submit">Upload</button>
-            <button id="px-clear" type="reset">Clear</button>
-          </div>
-          <script type="text/javascript">
-                      $('.fileUpload').fileUploader({
-                        allowedExtension : 'in|ans'
-                      });
-                    </script>
-          <span>Case amount: <select id="num-test-cases">
+          <span class="btn btn-success fileinput-button"> <i
+            class="glyphicon glyphicon-plus"></i> <span id="upload-info">Upload
+              test cases...</span> <input type="file" name="upload[]" multiple>
+          </span> <span>Case amount: <select ng-model="max_cases">
               <option value="5">5</option>
               <option value="8">8</option>
               <option value="10" selected>10</option>
               <option value="20">20</option>
           </select></span>
-        </div>
-        <div>
-          Missing <span id="missing-files">all</span>
+          <div>
+            Missing <span id="missing-files">all</span>
+          </div>
         </div>
       </div>
     </form>

@@ -2,16 +2,16 @@
   <div id="problems-div" class="module">
     <h3>Problems in homework {{homework.id}}</h3>
     <div style="margin-top: 30px">
-      <button class="btn btn-default need-admin"
-        id="add-problem-btn"
-        style="margin-left: 90%; width: 10%"
-        onclick="showAddProblem();">Add</button>
+      <button class="btn btn-default"
+        ng-show="loginInfo.role=='teacher'" ng-click="editHomework()"
+        style="margin-left: 90%; width: 10%">Edit</button>
       <table id="problems-table" class="table table-striped">
         <tr>
           <th>ID</th>
           <th>Name</th>
         </tr>
-        <tr ng-repeat="problem in problems | orderBy: 'id'" ng-click="openProblem(problem.id, problem.name)">
+        <tr ng-repeat="problem in problems | orderBy: 'id'"
+          ng-click="openProblem(problem.id, problem.name)">
           <td>{{problem.id}}</td>
           <td>{{problem.name}}</td>
         </tr>

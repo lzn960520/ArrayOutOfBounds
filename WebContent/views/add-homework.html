@@ -1,0 +1,42 @@
+<div class='module'>
+  <h3>Add homework</h3>
+  <div class="container-fluid"
+    style='margin-top: 30px; border-top: 1px solid #e5e5e5; padding-top: 10px'>
+    <form class="form-horizontal" role="form">
+      <div class="form-group">
+        <label for="name" class="col-xs-2 control-label">Name</label>
+        <div class="col-xs-10">
+          <input id="name" class="form-control" type="text">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="desc" class="col-xs-2 control-label">Description</label>
+        <div class="col-xs-10">
+          <textarea id="desc" style="height: 200px" class="form-control"
+            type="text"></textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-xs-2 control-label">Times</label>
+        <div class="col-xs-4" style="display: inline-block">
+          <label for="begintime">Begin time</label>
+          <datepicker show-weeks="false" ng-model="begindate"></datepicker>
+          <timepicker minute-step="15" show-meridian="false"
+            ng-model="begintime"></timepicker>
+        </div>
+        <div class="col-xs-4" style="display: inline-block">
+          <label style="margin: 0 auto" for="endtime">End time</label>
+          <datepicker show-weeks="false" ng-model="enddate"></datepicker>
+          <timepicker minute-step="15" show-meridian="false"
+            ng-model="endtime"></timepicker>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="problems" class="col-xs-2 control-label">Problems</label>
+        <div class="col-xs-10">
+          <input id="problems" class="form-control" type="text">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

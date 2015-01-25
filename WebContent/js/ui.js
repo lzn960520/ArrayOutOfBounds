@@ -125,38 +125,3 @@ app.provider("ui", function() {
     this.popup_noti("<span style='color:red'>" + noti + "</span>");
   }
 });
-app.controller("tabs_ctrl", [
-  "$scope",
-  "$location",
-  "ui",
-  "backend",
-  function($scope, $location, ui, backend) {
-    $scope.setURL = ui.setURL;
-    $scope.isURL = ui.isURL;
-    $scope.deleteTab = ui.deleteTab;
-    $scope.$watch("loginInfo", function() {
-      for (i = 0; i < $scope.tabs.length; i++) {
-        if ($scope.tabs[i].closable && !$scope.$eval($scope.tabs[i].condition))
-          ui.deleteTab(i--);
-      }
-    }, true);
-    $scope.$on("$locationChangeSuccess", function(e) {
-      for (i in $scope.tabs)
-        if ($scope.tabs[i].url == $location.path() &&
-            $scope.$eval($scope.tabs[i].condition))
-          return;
-      $location.path("");
-    })
-  } ]);
-app.controller("header_ctrl", [ "$scope", "$location", "backend", "ui",
-  function($scope, $location, backend, ui) {
-    $scope.logout = function() {
-      backend.doLogout(function(result) {
-        if (result.success) {
-          ui.popup_noti("<i>Logout successful</i>");
-        } else {
-          ui.popup_error("Logout failed: " + result.reason);
-        }
-      })
-    }
-  } ]);

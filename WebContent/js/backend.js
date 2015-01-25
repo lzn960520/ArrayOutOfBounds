@@ -127,209 +127,217 @@ $(function() {
 app
     .provider(
         "backend",
-        function() {
-          var socket = null;
-          var queue = [];
-          var working = false;
-          var waiting = null;
-          var self = this;
-          var ready = false;
-          var session_opened = false;
-          this.loginInfo = {
-            "session" : $.cookie("session") ||
-                "00000000000000000000000000000000",
-            "username" : $.cookie("username") || "",
-            "role" : $.cookie("role") || "nologin",
-          }
-          function connect() {
-            working = false;
-            ready = false;
-            socket = io("http://" + location.hostname + ":" + port, {
-              reconnection : false,
-              connect_timeout : 5000
-            });
-            socket.on('connect', function() {
-              ready = true;
-              if (!working)
-                work();
-            });
-            socket.on('connect_error', function() {
-              popup_noti("<span style='color:red'>Connection timeout</span>");
-              setTimeout(connect, 500);
-            })
-            socket.on('disconnect', function() {
-              ready = false;
-              working = false;
-              connect();
-            });
-            socket.on('message', function(data) {
-              var data = JSON.parse(data);
-              switch (data.type) {
-                case "error" :
-                  popup_noti("<span style='color:red'>Error: " + data.content +
-                      "</span>");
-                  break;
-                case "notification" :
-                  popup_noti(data.content);
-                  break;
-                case "resession" :
-                  queue = [];
-                  session_opened = false;
-                  break;
-                default :
-                  if (queue[0].callback)
-                    queue[0].callback(data);
-                  queue.shift();
-                  work();
-                  break;
-              }
-            });
-          }
-          function work() {
-            if (queue.length == 0) {
-              working = false;
-              return;
-            } else {
-              working = true;
-              if (queue[0].data)
-                if (socket != null)
-                  socket.send(self.loginInfo.session + queue[0].data);
-                else {
-                  if (queue[0].callback)
-                    queue[0].callback();
-                  queue.shift();
-                  work();
-                }
+        [
+          "uiProvider",
+          function(uiProvider) {
+            var socket = null;
+            var queue = [];
+            var working = false;
+            var waiting = null;
+            var self = this;
+            var ready = false;
+            var session_opened = false;
+            this.loginInfo = {
+              "session" : $.cookie("session") ||
+                  "00000000000000000000000000000000",
+              "username" : $.cookie("username") || "",
+              "role" : $.cookie("role") || "nologin",
             }
-          }
-          function send(data, callback) {
-            var job = {
-              "data" : data,
-              "callback" : callback || null
-            };
-            queue.push(job);
-            if (ready && !working)
-              work();
-          }
-          function waitForReady(callback) {
-            callback();
-          }
-          function openSession(callback) {
-            waitForReady(function() {
-              send(JSON.stringify({
-                "type" : "openSession",
-                "session" : self.loginInfo.session,
-              }), callback);
-            });
-          }
-          connect();
-          this.$get = [
-            "$q",
-            "$rootScope",
-            "ui",
-            function($q, $rootScope, ui) {
-              if (!session_opened) {
-                session_opened = true;
-                openSession(function(result) {
-                  if (($rootScope.loginInfo.session != result.set_session ||
-                      $rootScope.loginInfo.username != result.username || $rootScope.loginInfo.role != result.role) &&
-                      $rootScope.loginInfo.role != "nologin") {
-                    ui
-                        .popup_noti("<span style='color:red'>Please login again</span>");
+            function connect() {
+              working = false;
+              ready = false;
+              socket = io("http://" + location.hostname + ":" + port, {
+                reconnection : false,
+                connect_timeout : 5000
+              });
+              socket.on('connect', function() {
+                ready = true;
+                if (!working)
+                  work();
+              });
+              socket.on('connect_error', function() {
+                uiProvider.popup_error("Connection timeout");
+                setTimeout(connect, 500);
+              })
+              socket.on('disconnect', function() {
+                ready = false;
+                working = false;
+                connect();
+              });
+              socket.on('message', function(data) {
+                var data = JSON.parse(data);
+                switch (data.type) {
+                  case "error" :
+                    uiProvider.popup_error("Error: " + data.content);
+                    break;
+                  case "notification" :
+                    uiProvider.popup_noti(data.content);
+                    break;
+                  case "resession" :
+                    queue = [];
+                    session_opened = false;
+                    break;
+                  default :
+                    if (queue[0].callback)
+                      queue[0].callback(data);
+                    queue.shift();
+                    work();
+                    break;
+                }
+              });
+            }
+            function work() {
+              if (queue.length == 0) {
+                working = false;
+                return;
+              } else {
+                working = true;
+                if (queue[0].data)
+                  if (socket != null)
+                    socket.send(self.loginInfo.session + queue[0].data);
+                  else {
+                    if (queue[0].callback)
+                      queue[0].callback();
+                    queue.shift();
+                    work();
                   }
-                  $rootScope.$apply(function() {
-                    $rootScope.loginInfo.session = result.set_session;
-                    $rootScope.loginInfo.username = result.username;
-                    $rootScope.loginInfo.role = result.role;
-                  });
-                })
               }
-              $rootScope.loginInfo = this.loginInfo;
-              $rootScope.$watch("loginInfo", function() {
-                $.cookie("session", $rootScope.loginInfo.session);
-                if ($rootScope.loginInfo.username == "") {
-                  $.removeCookie("username");
-                  $.removeCookie("role");
-                } else {
-                  $.cookie("username", $rootScope.loginInfo.username);
-                  $.cookie("role", $rootScope.loginInfo.role);
+            }
+            function send(data, callback) {
+              var job = {
+                "data" : data,
+                "callback" : callback || null
+              };
+              queue.push(job);
+              if (ready && !working)
+                work();
+            }
+            function waitForReady(callback) {
+              callback();
+            }
+            function openSession(callback) {
+              waitForReady(function() {
+                send(JSON.stringify({
+                  "type" : "openSession",
+                  "session" : self.loginInfo.session,
+                }), callback);
+              });
+            }
+            connect();
+            this.$get = [
+              "$q",
+              "$rootScope",
+              "ui",
+              function($q, $rootScope, ui) {
+                if (!session_opened) {
+                  session_opened = true;
+                  openSession(function(result) {
+                    if (($rootScope.loginInfo.session != result.set_session ||
+                        $rootScope.loginInfo.username != result.username || $rootScope.loginInfo.role != result.role) &&
+                        $rootScope.loginInfo.role != "nologin") {
+                      ui
+                          .popup_noti("<span style='color:red'>Please login again</span>");
+                    }
+                    $rootScope.$apply(function() {
+                      $rootScope.loginInfo.session = result.set_session;
+                      $rootScope.loginInfo.username = result.username;
+                      $rootScope.loginInfo.role = result.role;
+                    });
+                  })
                 }
-              }, true);
-              return {
-                "doLogin" : function(username, password, callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "login",
-                      "username" : username,
-                      "password" : password
-                    }), function(data) {
-                      if (data.success) {
-                        $rootScope.$apply(function() {
-                          $rootScope.loginInfo.username = data.username;
-                          $rootScope.loginInfo.role = data.role;
-                        });
-                      }
-                      if (callback)
-                        callback(data);
+                $rootScope.loginInfo = this.loginInfo;
+                $rootScope.$watch("loginInfo", function() {
+                  $.cookie("session", $rootScope.loginInfo.session);
+                  if ($rootScope.loginInfo.username == "") {
+                    $.removeCookie("username");
+                    $.removeCookie("role");
+                  } else {
+                    $.cookie("username", $rootScope.loginInfo.username);
+                    $.cookie("role", $rootScope.loginInfo.role);
+                  }
+                }, true);
+                return {
+                  "doLogin" : function(username, password, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "login",
+                        "username" : username,
+                        "password" : password
+                      }), function(data) {
+                        if (data.success) {
+                          $rootScope.$apply(function() {
+                            $rootScope.loginInfo.username = data.username;
+                            $rootScope.loginInfo.role = data.role;
+                          });
+                        }
+                        if (callback)
+                          callback(data);
+                      });
                     });
-                  });
-                },
-                "doLogout" : function(callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "logout",
-                    }), function(data) {
-                      if (data.success) {
-                        $rootScope.$apply(function() {
-                          $rootScope.loginInfo.username = data.username;
-                          $rootScope.loginInfo.role = data.role;
-                        });
-                      }
-                      if (callback)
-                        callback(data);
+                  },
+                  "doLogout" : function(callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "logout",
+                      }), function(data) {
+                        if (data.success) {
+                          $rootScope.$apply(function() {
+                            $rootScope.loginInfo.username = data.username;
+                            $rootScope.loginInfo.role = data.role;
+                          });
+                        }
+                        if (callback)
+                          callback(data);
+                      });
                     });
-                  });
-                },
-                "doRegister" : function(username, password, callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "register",
-                      "username" : username,
-                      "password" : password
-                    }), function(data) {
-                      if (data.success) {
-                        $rootScope.$apply(function() {
-                          $rootScope.loginInfo.username = data.username;
-                          $rootScope.loginInfo.role = data.role;
-                        });
-                      }
-                      if (callback)
-                        callback(data);
+                  },
+                  "doRegister" : function(username, password, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "register",
+                        "username" : username,
+                        "password" : password
+                      }), function(data) {
+                        if (data.success) {
+                          $rootScope.$apply(function() {
+                            $rootScope.loginInfo.username = data.username;
+                            $rootScope.loginInfo.role = data.role;
+                          });
+                        }
+                        if (callback)
+                          callback(data);
+                      });
                     });
-                  });
-                },
-                "getContests" : function(callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "getContests",
-                    }), callback);
-                  });
-                },
-                "getProblems" : function(callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "getProblems",
-                    }), callback);
-                  });
-                },
-                "submitCode" : function(code, callback) {
-                  waitForReady(function() {
-                    send(JSON.stringify({
-                      "type" : "submitCode",
-                      "code" : code
-                    }), callback);
-                  });
+                  },
+                  "getContests" : function(callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "getContests",
+                      }), callback);
+                    });
+                  },
+                  "getProblems" : function(callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "getProblems",
+                      }), callback);
+                    });
+                  },
+                  "submitCode" : function(code, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "submitCode",
+                        "code" : code
+                      }), callback);
+                    });
+                  },
+                  "getStudents" : function(callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "getStudents"
+                      }), callback);
+                    });
+                  }
                 }
-              }
-            } ];
-        });
+              } ];
+          } ]);

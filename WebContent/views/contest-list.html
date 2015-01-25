@@ -1,10 +1,9 @@
 <div class="module">
   <h3>Contests</h3>
   <div style="margin-top: 30px">
-    <button class="btn btn-default need-admin"
-      id="add-contest-btn"
-      style="margin-left: 90%; width: 10%" data-toggle="modal"
-      data-target="#add-contest-modal">Add</button>
+    <button class="btn btn-default" ng-click="addContest"
+      ng-show="loginInfo.role=='admin'"
+      style="margin-left: 90%; width: 10%">Add</button>
     <table id="contests-table" class="table table-striped">
       <tr>
         <th>ID</th>
