@@ -337,6 +337,21 @@ app
                         "type" : "getStudents"
                       }), callback);
                     });
+                  },
+                  "addProblem" : function(name, desc, input, output, session,
+                      num_case, type, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "addProblem",
+                        "name" : name,
+                        "description" : desc,
+                        "input" : input,
+                        "output" : output,
+                        "upload_session" : session,
+                        "num_case" : num_case,
+                        "problem_type" : type
+                      }), callback);
+                    });
                   }
                 }
               } ];

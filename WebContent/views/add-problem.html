@@ -7,13 +7,14 @@
       <div class="form-group">
         <label for="name" class="col-xs-2 control-label">Name</label>
         <div class="col-xs-10">
-          <input id="name" class="userinput form-control" type="text">
+          <input id="name" class="form-control" type="text"
+            ng-model="name">
         </div>
       </div>
       <div class="form-group">
         <label for="type" class="col-xs-2 control-label">Type</label>
         <div class="col-xs-3">
-          <select id="type" class="userinput form-control">
+          <select id="type" class="form-control" ng-model="type">
             <option value="Ad Hoc">Ad Hoc</option>
             <option value="Graph">Graph</option>
             <option value="Search">Search</option>
@@ -43,8 +44,8 @@
       <div class="form-group">
         <label for="desc" class="col-xs-2 control-label">Description</label>
         <div class="col-xs-10">
-          <textarea id="desc" style="height: 200px"
-            class="userinput form-control" type="text"></textarea>
+          <textarea id="desc" style="height: 200px" class="form-control"
+            type="text" ng-model='desc'></textarea>
         </div>
       </div>
       <div class="form-group">
@@ -52,7 +53,7 @@
           input</label>
         <div class="col-xs-10">
           <textarea id="input" style="height: 100px"
-            class="userinput form-control" type="text"></textarea>
+            class="form-control" type="text" ng-model='input'></textarea>
         </div>
       </div>
       <div class="form-group">
@@ -60,26 +61,32 @@
           output</label>
         <div class="col-xs-10">
           <textarea id="output" style="height: 100px"
-            class="userinput form-control" type="text"></textarea>
+            class="form-control" type="text" ng-model='output'></textarea>
         </div>
       </div>
       <div class="form-group">
         <label class="col-xs-2 control-label">Test cases</label>
         <div class="col-xs-10">
           <span class="btn btn-success fileinput-button"> <i
-            class="glyphicon glyphicon-plus"></i> <span id="upload-info">Upload
-              test cases...</span> <input type="file" name="upload[]" multiple>
+            class="glyphicon glyphicon-plus"></i> <span>{{upload_info}}</span>
+            <input type="file" name="upload[]" multiple>
           </span> <span>Case amount: <select ng-model="max_cases">
+              <option value="1">1</option>
               <option value="5">5</option>
               <option value="8">8</option>
-              <option value="10" selected>10</option>
+              <option value="10">10</option>
               <option value="20">20</option>
           </select></span>
-          <div>
-            Missing <span id="missing-files">all</span>
-          </div>
+          <div>Missing {{missing}}</div>
         </div>
       </div>
     </form>
+  </div>
+  <div class="container-fluid"
+    style='border-top: 1px solid #e5e5e5; padding-top: 10px'>
+    <span class="col-xs-11"></span>
+    <button type="button" ng-click="doAddProblem()"
+      class="btn btn-success col-xs-1"
+      ng-disabled="missing != 'nothing'">Submit</button>
   </div>
 </div>

@@ -91,6 +91,15 @@ app.provider("ui", function() {
         that.addTab(name, url, options);
       },
       deleteTab : function(index) {
+        if (typeof index == "string") {
+          for (i in that.tabs)
+            if (that.tabs[i].url == index) {
+              index = Number(i);
+              break;
+            }
+          if (typeof index == "string")
+            return;
+        }
         if (that.tabs[index].url == $location.path())
           $location.path("");
         that.deleteTab(index);
@@ -118,6 +127,15 @@ app.provider("ui", function() {
     });
   }
   this.deleteTab = function(index) {
+    if (typeof index == "string") {
+      for (i in that.tabs)
+        if (that.tabs[i].url == index) {
+          index = i;
+          break;
+        }
+      if (typeof index == "string")
+        return;
+    }
     this.tabs.splice(index, 1);
   }
   this.popup_noti = notimanager.popup;

@@ -22,15 +22,48 @@ app.controller("list_problem_ctrl", [ "$scope", "$location", "ui", "backend",
 app.controller("add_problem_ctrl", [
   "$scope",
   "backend",
-  function($scope, backend) {
+  "ui",
+  "$location",
+  function($scope, backend, ui, $location) {
     var add_problem_session = null;
     $scope.max_cases = 10;
+    $scope.missing = 'all';
+    $scope.upload_info = 'Upload test cases...';
+    $scope.name = '';
+    $scope.type = 'Ad Hoc';
+    $scope.desc = '';
+    $scope.input = '';
+    $scope.output = '';
+    $scope.doAddProblem = function() {
+      backend.addProblem(
+          $scope.name,
+          $scope.desc,
+          $scope.input,
+          $scope.output,
+          add_problem_session,
+          $scope.max_cases,
+          $scope.type,
+          function(data) {
+            if (data.success) {
+              ui.popup_noti("Add problem succeeded");
+              $scope.$apply(function() {
+                ui.deleteTab("/problem/add");
+                ui.addTab($scope.name, "/problem/" + data.pid, {
+                  closable : true
+                });
+                $location.path("/problem/" + data.pid);
+              });
+            } else {
+              ui.popup_error("Add problem failed: " + data.reason);
+            }
+          });
+    };
     $('#fileupload').fileupload(
         {
           dataType : 'json',
           type : 'POST',
           singleFileUploads : false,
-          url: 'uploadcasefile',
+          url : 'uploadcasefile',
           formData : function() {
             return [ {
               name : 'session',
@@ -41,30 +74,28 @@ app.controller("add_problem_ctrl", [
             } ];
           },
           done : function(e, data) {
-            $("#add-edit-problem-modal #upload-info").text(
-                'Upload test cases...');
-            $("#add-edit-problem-modal #upload-btn").removeClass("disabled");
-            if (data.result.missing.length == 0) {
-              $("#add-edit-problem-modal #missing-files").text('nothing');
-              $("#confirm-add-problem-btn").removeClass("disabled");
-              $("#confirm-edit-problem-btn").removeClass("disabled");
-            } else {
-              $("#add-edit-problem-modal #missing-files").text(
-                  data.result.missing.join(', '));
-              $("#confirm-add-problem-btn").addClass("disabled");
-              $("#confirm-edit-problem-btn").addClass("disabled");
-            }
+            $scope.$apply(function() {
+              $scope.upload_info = 'Upload test cases...';
+              $("#add-edit-problem-modal #upload-btn").removeClass("disabled");
+              if (data.result.missing.length == 0) {
+                $scope.missing = 'nothing';
+              } else {
+                $scope.missing = data.result.missing.join(', ');
+              }
+            });
             add_problem_session = data.result.session;
           },
           progress : function(e, data) {
-            if (data.loaded == data.total) {
-              $("#add-edit-problem-modal #upload-info").text(
-                  'Uploaded, processing');
-              $("#add-edit-problem-modal #upload-btn").addClass("disabled");
-            } else {
-              $("#add-edit-problem-modal #upload-info").text(
-                  (Math.round(data.loaded / data.total * 1000) / 10) + "%");
-            }
+            $scope.$apply(function() {
+              if (data.loaded == data.total) {
+                $scope.upload_info = 'Uploaded, processing';
+                $("#add-edit-problem-modal #upload-btn").addClass("disabled");
+              } else {
+                $scope.upload_info = (Math.round(data.loaded / data.total *
+                    1000) / 10) +
+                    "%";
+              }
+            });
           }
         });
   } ]);
