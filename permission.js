@@ -1,17 +1,20 @@
-var permissionManager = function(callback) {
+var permissionManager = function(logger, callback) {
   var self = this;
   this.roles = {};
   var fs = require("fs");
-  fs.readdir("roles/", function(err, files) {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    for (var i = 0; i < files.length; i++)
-      self.roles[files[i].substr(0, files[i].length - 3)] =
-        new (require("./roles/" + files[i]));
-    callback();
-  });
+  fs
+      .readdir(
+          "roles/",
+          function(err, files) {
+            if (err) {
+              logger.error(err.stack);
+              return;
+            }
+            for (var i = 0; i < files.length; i++)
+              self.roles[files[i].substr(0, files[i].length - 3)] = new (require("./roles/" +
+                  files[i]));
+            callback();
+          });
 }
 
 permissionManager.prototype.granted = function(req, res) {
@@ -22,5 +25,5 @@ permissionManager.prototype.granted = function(req, res) {
   else
     return true;
 }
-  
+
 module.exports = permissionManager;

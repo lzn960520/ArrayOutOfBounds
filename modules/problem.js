@@ -1,6 +1,5 @@
-module.exports = function(env) {
+module.exports = function(env, logger) {
   var net = require('net');
-  var exec = require("child_process").exec;
   var fs = require('fs');
 
   function findMissingCaseFile(dir, max_case, callback) {
@@ -8,7 +7,7 @@ module.exports = function(env) {
       return;
     fs.readdir(__dirname + "/tmp/" + dir, function(err, files) {
       if (err) {
-        console.log(err.stack);
+        logger.error(err.stack);
         callback([ 'all' ]);
         return;
       }
@@ -75,65 +74,74 @@ module.exports = function(env) {
       var session = req.data.upload_session;
       findMissingCaseFile(session, req.data.num_case, function(missing) {
         if (missing.length != 0) {
-          res.fail("Missing test case " + missing);
-          exec("rm -r -f " + __dirname + "/tmp/" + session, function(err) {
-            if (err)
-              throw new Error(err);
-          });
+          env.modules.helper.rmdir(
+              __dirname + "/tmp/" + session,
+              function(err) {
+                if (err)
+                  throw new Error(err);
+                res.fail("Missing test case " + missing);
+              });
         } else {
           req.db.collection('problems', {
             safe : true,
             strict : true
           }, function(err, collection) {
             if (err) {
-              exec("rm -r -f " + __dirname + "/tmp/" + session, function(err) {
-                if (err)
-                  throw new Error(err);
+              env.modules.helper.rmdir(__dirname + "/tmp/" + session, function(
+                  err2) {
+                if (err2)
+                  throw new Error(err2);
+                throw new Error(err);
               });
-              throw new Error(err);
+              return;
             }
             collection.count({}, function(err, count) {
               if (err) {
-                exec(
-                    "rm -r -f " + __dirname + "/tmp/" + session,
-                    function(err) {
-                      if (err)
-                        throw new Error(err);
+                env.modules.helper.rmdir(
+                    __dirname + "/tmp/" + session,
+                    function(err2) {
+                      if (err2)
+                        throw new Error(err2);
+                      throw new Error(err);
                     });
-                throw new Error(err);
+                return;
               }
               var newpid = count + 1;
               fs.rename(__dirname + "/tmp/" + session, __dirname + "/problem/" +
                   newpid, function(err) {
                 if (err) {
-                  exec("rm -r -f " + __dirname + "/tmp/" + session, function(
-                      err) {
-                    if (err)
-                      throw new Error(err);
-                  });
-                  throw new Error(err);
+                  env.modules.helper.rmdir(
+                      __dirname + "/tmp/" + session,
+                      function(err2) {
+                        if (err2)
+                          throw new Error(err2);
+                        throw new Error(err);
+                      });
+                  return;
                 }
                 collection.insert({
                   "name" : req.data.name,
                   "description" : req.data.description,
                   "input" : req.data.input,
                   "output" : req.data.output,
-                  "pid" : req.newpid,
+                  "pid" : newpid,
                   "num_case" : req.data.num_case,
-                  "type" : req.data.type
+                  "type" : req.data.problem_type
                 }, {
                   safe : true
                 }, function(err, result) {
                   if (err) {
-                    exec(
-                        "rm -r -f " + __dirname + "/problem/" + newpid,
-                        function(err) {
-                          if (err)
-                            throw new Error(err);
+                    env.modules.helper.rmdir(
+                        __dirname + "/problem/" + newpid,
+                        function(err2) {
+                          if (err2)
+                            throw new Error(err2);
+                          throw new Error(err);
                         });
-                    throw new Error(err);
                   } else
-                    res.success();
+                    res.success({
+                      pid : newpid
+                    });
                 });
               });
             });
@@ -173,59 +181,66 @@ module.exports = function(env) {
     } else {
       findMissingCaseFile(session, req.data.num_case, function(missing) {
         if (missing.length != 0) {
-          res.fail("Missing test case " + missing);
-          exec("rm -r -f " + __dirname + "/tmp/" + session, function(err) {
-            if (err)
-              throw new Error(err);
-          });
-        } else {
-          exec("rm -r -f " + __dirname + "/problem/" + req.data.pid, function(
-              err) {
-            if (err) {
-              exec("rm -r -f " + __dirname + "/tmp/" + session, function(err) {
+          env.modules.helper.rmdir(
+              __dirname + "/tmp/" + session,
+              function(err) {
                 if (err)
                   throw new Error(err);
+                res.fail("Missing test case " + missing);
               });
-              throw new Error(err);
-            }
-            fs.rename(__dirname + "/tmp/" + session, __dirname + "/problem/" +
-                req.data.pid, function(err) {
-              if (err) {
-                exec(
-                    "rm -r -f " + __dirname + "/tmp/" + session,
-                    function(err) {
+        } else {
+          env.modules.helper.rmdir(
+              __dirname + "/problem/" + req.data.pid,
+              function(err) {
+                if (err) {
+                  env.modules.helper.rmdir(
+                      __dirname + "/tmp/" + session,
+                      function(err2) {
+                        if (err2)
+                          throw new Error(err2);
+                        throw new Error(err);
+                      });
+                  return;
+                }
+                fs.rename(__dirname + "/tmp/" + session, __dirname +
+                    "/problem/" + req.data.pid, function(err) {
+                  if (err) {
+                    env.modules.helper.rmdir(
+                        __dirname + "/tmp/" + session,
+                        function(err2) {
+                          if (err2)
+                            throw new Error(err2);
+                          throw new Error(err);
+                        });
+                    return;
+                  }
+                  req.db.collection("problems", {
+                    safe : true,
+                    strict : true
+                  }, function(err, collection) {
+                    if (err)
+                      throw new Error(err);
+                    collection.update({
+                      "pid" : parseInt(req.data.pid)
+                    }, {
+                      $set : {
+                        "name" : req.data.name,
+                        "description" : req.data.description,
+                        "input" : req.data.input,
+                        "output" : req.data.output,
+                        "problem_type" : req.data.problem_type,
+                        "num_case" : req.data.num_case
+                      }
+                    }, {
+                      safe : true
+                    }, function(err, result) {
                       if (err)
                         throw new Error(err);
+                      res.success();
                     });
-                throw new Error(err);
-              }
-              req.db.collection("problems", {
-                safe : true,
-                strict : true
-              }, function(err, collection) {
-                if (err)
-                  throw new Error(err);
-                collection.update({
-                  "pid" : parseInt(req.data.pid)
-                }, {
-                  $set : {
-                    "name" : req.data.name,
-                    "description" : req.data.description,
-                    "input" : req.data.input,
-                    "output" : req.data.output,
-                    "problem_type" : req.data.problem_type,
-                    "num_case" : req.data.num_case
-                  }
-                }, {
-                  safe : true
-                }, function(err, result) {
-                  if (err)
-                    throw new Error(err);
-                  res.success();
+                  });
                 });
               });
-            });
-          });
         }
       });
     }
@@ -246,8 +261,8 @@ module.exports = function(env) {
       }, function(err, result) {
         if (err)
           throw new Error(err);
-        exec(
-            "rm -r -f " + __dirname + "/problem/" + req.data.pid,
+        env.modules.helper.rmdir(
+            __dirname + "/problem/" + req.data.pid,
             function(err) {
               if (err)
                 throw new Error(err);
