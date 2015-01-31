@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = function(env) {
   function handleGetContest(req, res) {
     req.db.collection("contests", {
@@ -44,7 +46,7 @@ module.exports = function(env) {
   }
 
   function handleAddContest(req, res) {
-    req.db.collection('contests', {
+    req.db.collection("contests", {
       safe : true,
       strict : true
     }, function(err, collection) {
@@ -61,7 +63,7 @@ module.exports = function(env) {
           "cid" : count + 1
         }, {
           safe : true
-        }, function(err, result) {
+        }, function(err) {
           if (err)
             throw new Error(err);
           res.success();
@@ -73,4 +75,4 @@ module.exports = function(env) {
   env.registerHandler("getContest", handleGetContest);
   env.registerHandler("getContests", handleGetContests);
   env.registerHandler("addContest", handleAddContest);
-}
+};

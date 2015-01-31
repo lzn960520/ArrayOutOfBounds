@@ -1,3 +1,5 @@
+"use strict";
+
 function Request(ws, data, db) {
   this.ws = ws;
   this.data = data;
@@ -18,7 +20,7 @@ Response.prototype.resession = function() {
     "success": false,
     "reason": "Bad session"
   }));
-}
+};
 
 Response.prototype.fail = function(reason) {
   var self = this;
@@ -36,14 +38,14 @@ Response.prototype.fail = function(reason) {
       "success": false,
       "reason": reason
     }));
-}
+};
 
 Response.prototype.success = function(data) {
   var self = this;
   var res = {
     "type": this.data.type,
     "success": true
-  }
+  };
   for (var i in data)
     res[i] = data[i];
   if (self.session)
@@ -52,7 +54,7 @@ Response.prototype.success = function(data) {
     });
   else
     self.ws.send(JSON.stringify(res));
-}
+};
 
 module.exports.Request = Request;
 module.exports.Response = Response;

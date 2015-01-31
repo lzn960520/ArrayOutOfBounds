@@ -1,6 +1,8 @@
-var role_admin = function() {}
+"use strict";
 
-role_admin.prototype.granted = function(req, res) {
+var role_admin = function() {};
+
+role_admin.prototype.granted = function(req) {
   switch (req.data.type) {
     case "editProblem" :
     case "addProblem" :
@@ -21,6 +23,6 @@ role_admin.prototype.granted = function(req, res) {
     default :
       throw new Error("Undefined message permission");
   }
-}
+};
 
 module.exports = role_admin;

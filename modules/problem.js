@@ -1,6 +1,8 @@
+"use strict";
+
 module.exports = function(env, logger) {
-  var net = require('net');
-  var fs = require('fs');
+  var net = require("net");
+  var fs = require("fs");
 
   function findMissingCaseFile(dir, max_case, callback) {
     if (!callback)
@@ -8,19 +10,19 @@ module.exports = function(env, logger) {
     fs.readdir(__dirname + "/tmp/" + dir, function(err, files) {
       if (err) {
         logger.error(err.stack);
-        callback([ 'all' ]);
+        callback([ "all" ]);
         return;
       }
-      files = files.join('\n');
+      files = files.join("\n");
       var ans = [];
       for (var i = 1; i <= max_case; i++) {
-        if (!files.match(i + '.in'))
-          ans.push(i + '.in');
-        if (!files.match(i + '.out'))
-          ans.push(i + '.out');
+        if (!files.match(i + ".in"))
+          ans.push(i + ".in");
+        if (!files.match(i + ".out"))
+          ans.push(i + ".out");
       }
       callback(ans);
-    })
+    });
   }
   this.findMissingCaseFile = findMissingCaseFile;
 
@@ -73,7 +75,7 @@ module.exports = function(env, logger) {
     else {
       var session = req.data.upload_session;
       findMissingCaseFile(session, req.data.num_case, function(missing) {
-        if (missing.length != 0) {
+        if (missing.length !== 0) {
           env.modules.helper.rmdir(
               __dirname + "/tmp/" + session,
               function(err) {
@@ -82,7 +84,7 @@ module.exports = function(env, logger) {
                 res.fail("Missing test case " + missing);
               });
         } else {
-          req.db.collection('problems', {
+          req.db.collection("problems", {
             safe : true,
             strict : true
           }, function(err, collection) {
@@ -129,7 +131,7 @@ module.exports = function(env, logger) {
                   "type" : req.data.problem_type
                 }, {
                   safe : true
-                }, function(err, result) {
+                }, function(err) {
                   if (err) {
                     env.modules.helper.rmdir(
                         __dirname + "/problem/" + newpid,
@@ -172,7 +174,7 @@ module.exports = function(env, logger) {
           }
         }, {
           safe : true
-        }, function(err, result) {
+        }, function(err) {
           if (err)
             throw new Error(err);
           res.success();
@@ -180,7 +182,7 @@ module.exports = function(env, logger) {
       });
     } else {
       findMissingCaseFile(session, req.data.num_case, function(missing) {
-        if (missing.length != 0) {
+        if (missing.length !== 0) {
           env.modules.helper.rmdir(
               __dirname + "/tmp/" + session,
               function(err) {
@@ -233,7 +235,7 @@ module.exports = function(env, logger) {
                       }
                     }, {
                       safe : true
-                    }, function(err, result) {
+                    }, function(err) {
                       if (err)
                         throw new Error(err);
                       res.success();
@@ -258,7 +260,7 @@ module.exports = function(env, logger) {
       }, {
         safe : true,
         strict : true
-      }, function(err, result) {
+      }, function(err) {
         if (err)
           throw new Error(err);
         env.modules.helper.rmdir(
@@ -293,17 +295,17 @@ module.exports = function(env, logger) {
         }).toArray(function(err, docs) {
           if (err)
             throw new Error(err);
-          if (docs.length == 0)
+          if (docs.length === 0)
             res.fail("No such problem");
           else {
             var sock = net.connect("/tmp/judged.sock", function() {
               sock.setEncoding("utf8");
-              sock.on('data', function(data) {
+              sock.on("data", function(data) {
                 var score = 0;
                 var result = "";
                 var i = 0;
                 for (; i < data.length; i++)
-                  if (data[i] != ' ')
+                  if (data[i] != " ")
                     score = score * 10 + parseInt(data[i]);
                   else
                     break;
@@ -317,11 +319,11 @@ module.exports = function(env, logger) {
                   "result" : result
                 });
               });
-              var str = ("0 " + // language
+              var str = "0 " + // language
               filename + " " + // sourcefile
               __dirname + "/problem/" + req.data.pid + " " + // judge_dir
               docs[0].num_case + // num_case
-              "\n");
+              "\n";
               sock.write(str);
             });
           }
@@ -340,10 +342,10 @@ module.exports = function(env, logger) {
       collection.find({
         "pid" : req.data.pid,
         "username" : req.data.username
-      }).toArray(function(err, docs) {
+      }).toArray(function(err) {
         if (err)
           throw new Error(err);
-        ws.send(JSON.stringify(relative_results));
+        res.success({});
       });
     });
   }
@@ -354,6 +356,7 @@ module.exports = function(env, logger) {
   env.registerHandler("editProblem", handleEditProblem);
   env.registerHandler("removeProblem", handleRemoveProblem);
   env.registerHandler("submitCode", handleSubmitCode);
+  env.registerHandler("getResult", handleGetResult);
 
   return this;
-}
+};

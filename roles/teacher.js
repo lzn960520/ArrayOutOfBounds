@@ -1,6 +1,8 @@
-var role_teacher = function() {}
+"use strict";
 
-role_teacher.prototype.granted = function(req, res) {
+var role_teacher = function() {};
+
+role_teacher.prototype.granted = function(req) {
   switch (req.data.type) {
     case "addContest" :
     case "submitCode" :
@@ -21,6 +23,6 @@ role_teacher.prototype.granted = function(req, res) {
     default :
       throw new Error("Undefined message permission");
   }
-}
+};
 
 module.exports = role_teacher;

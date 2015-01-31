@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = function(env) {
   function checkUsername(name) {
     return name.length >= 6;
@@ -6,7 +8,7 @@ module.exports = function(env) {
     return password.length >= 6;
   }
   function handleLogin(req, res) {
-    req.db.collection('users', {
+    req.db.collection("users", {
       safe : true,
       strict : true
     }, function(err, collection) {
@@ -15,7 +17,7 @@ module.exports = function(env) {
       collection.find({
         username : req.data.username
       }).toArray(function(err, docs) {
-        if (docs.length == 0)
+        if (docs.length === 0)
           res.fail("User does not exist");
         else if (docs[0].password != req.data.password)
           res.fail("Password is not correct");
@@ -36,7 +38,7 @@ module.exports = function(env) {
     var password = req.data.password;
     req.db
         .collection(
-            'users',
+            "users",
             {
               safe : true,
               strict : true
@@ -56,7 +58,7 @@ module.exports = function(env) {
                 }, function(err, count) {
                   if (err)
                     throw new Error(err);
-                  if (count != 0)
+                  if (count !== 0)
                     res.fail("Username has been taken");
                   else {
                     collection.insert({
@@ -65,7 +67,7 @@ module.exports = function(env) {
                       "role" : "user"
                     }, {
                       safe : true
-                    }, function(err, result) {
+                    }, function(err) {
                       if (err)
                         throw new Error(err);
                       res.session.role = "user";
@@ -96,4 +98,4 @@ module.exports = function(env) {
     "username" : "",
     "role" : "nologin"
   });
-}
+};

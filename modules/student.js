@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = function(env) {
   function handleGetStudents(req, res) {
     req.db.collection("users", {
@@ -20,4 +22,4 @@ module.exports = function(env) {
   }
 
   env.registerHandler("getStudents", handleGetStudents);
-}
+};

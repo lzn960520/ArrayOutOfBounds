@@ -1,23 +1,25 @@
+"use strict";
+
 function isArray(o) {
-  return Object.prototype.toString.call(o) === '[object Array]';
+  return Object.prototype.toString.call(o) === "[object Array]";
 }
 module.exports = function(env, logger) {
-  var fs = require('fs');
-  var express = require('express');
-  var bodyParser = require('body-parser');
+  var fs = require("fs");
+  var express = require("express");
+  var bodyParser = require("body-parser");
 
   // Run upload server
   var webapp = express();
   webapp.use(bodyParser.urlencoded({
     extended : false
   }));
-  webapp.use(require('connect-multiparty')());
+  webapp.use(require("connect-multiparty")());
   webapp.post(
       "/innovenus/OutOfBounds/master/WebContent/uploadcasefile",
       function(req, res) {
         var session = req.body.session;
-        if ((typeof session == "undefined") || (session == null) ||
-            (session == "null") || (session == "")) {
+        if (typeof session === "undefined" || session === null ||
+            session === "null" || session === "") {
           session = env.randomMD5();
           fs.mkdirSync(__dirname + "/tmp/" + session + "/");
         }
@@ -56,7 +58,7 @@ module.exports = function(env, logger) {
                           });
                   });
               fs.unlink(file.path);
-            })
+            });
           } else {
             fs.unlink(file.path);
             processed++;
@@ -74,8 +76,8 @@ module.exports = function(env, logger) {
         });
       });
   env.uploadapp = webapp;
-  var server = webapp.listen(8000, function(err) {
+  var server = webapp.listen(8000, function() {
     logger.info("Upload server ready");
   });
   env.uploadserver = server;
-}
+};

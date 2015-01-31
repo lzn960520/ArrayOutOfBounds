@@ -1,3 +1,5 @@
+"use strict";
+
 var permissionManager = function(logger, callback) {
   var self = this;
   this.roles = {};
@@ -12,10 +14,10 @@ var permissionManager = function(logger, callback) {
             }
             for (var i = 0; i < files.length; i++)
               self.roles[files[i].substr(0, files[i].length - 3)] = new (require("./roles/" +
-                  files[i]));
+                  files[i]))();
             callback();
           });
-}
+};
 
 permissionManager.prototype.granted = function(req, res) {
   if (!req.session.role || !this.roles[req.session.role])
@@ -24,6 +26,6 @@ permissionManager.prototype.granted = function(req, res) {
     res.fail("Permission denied");
   else
     return true;
-}
+};
 
 module.exports = permissionManager;

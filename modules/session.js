@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = function(env) {
   function handleOpenSession(req, res) {
     if (!req.session) {

@@ -1,21 +1,22 @@
+"use strict";
+
 // Import modules
-var fs = require('fs');
-var net = require('net');
-var crypto = require('crypto');
-var os = require('os');
-var mongodb = require('mongodb');
-var domain = require('domain');
-var reqres = require('./reqres');
+var fs = require("fs");
+var crypto = require("crypto");
+var os = require("os");
+var mongodb = require("mongodb");
+var domain = require("domain");
+var reqres = require("./reqres");
 var sessionStore = require("./session.js");
 var permissionManager = require("./permission.js");
-var log4js = require('log4js');
+var log4js = require("log4js");
 log4js.configure({
   appenders : [ {
-    type : 'console'
+    type : "console"
   }, {
-    type : 'dateFile',
+    type : "dateFile",
     filename : "server",
-    pattern : '_yyyy_MM_dd.log',
+    pattern : "_yyyy_MM_dd.log",
     alwaysIncludePattern : true,
     maxLogSize : 4 * 1000 * 1000 * 1000,
     backups : 5
@@ -28,13 +29,13 @@ log4js.configure({
 var logger = log4js.getLogger("server");
 
 // Handler table
-var handles = {}
+var handles = {};
 
 // Connect to database.
-var server = new mongodb.Server('localhost', 27017, {
+var server = new mongodb.Server("localhost", 27017, {
   auto_reconnect : true
 });
-var db = new mongodb.Db('outofbound', server, {
+var db = new mongodb.Db("outofbound", server, {
   safe : true
 });
 db
@@ -44,13 +45,11 @@ db
         return;
       }
       logger.info("Database ready");
-      sessionStore = new sessionStore(
-          db,
-          "session",
+      sessionStore = new sessionStore(db, "session",
           function() {
             logger.info("Session storage ready");
-            permissionManager = new permissionManager(
-                log4js.getLogger("permMan"),
+            permissionManager = new permissionManager(log4js
+                .getLogger("permMan"),
                 function() {
                   logger.info("Permission manager ready");
                   // Environment for modules
@@ -61,14 +60,13 @@ db
                       handles[name] = func;
                     },
                     "randomMD5" : function() {
-                      return crypto
-                          .createHash('md5')
-                          .update(
-                              crypto.createHash('md5').update(
+                      return crypto.createHash("md5").update(
+                          crypto.createHash("md5")
+                              .update(
                                   ((os.uptime() + os.totalmem()) * (os
                                       .freemem() + 100007)).toString() +
-                                      (new Date().toISOString())).digest('hex') +
-                                  Math.random()).digest('hex');
+                                      new Date().toISOString()).digest("hex") +
+                              Math.random()).digest("hex");
                     },
                     "initSession" : function(session, callback) {
                       sessionStore.initSession(session, callback);
@@ -77,7 +75,7 @@ db
                       sessionStore.registerDefaultSession(defaults);
                     },
                     modules : {}
-                  }
+                  };
 
                   // Load modules
                   fs
@@ -89,13 +87,13 @@ db
                               return;
                             }
                             for (var i = 0; i < files.length; i++)
-                              if (files[i].slice(-3) == '.js') {
+                              if (files[i].slice(-3) == ".js") {
                                 logger.info("Loading " +
                                     files[i].slice(0, files[i].length - 3));
                                 env.modules[files[i].slice(
                                     0,
-                                    files[i].length - 3)] = require(
-                                    "./modules/" + files[i])(
+                                    files[i].length - 3)] = new (require(
+                                    "./modules/" + files[i]))(
                                     env,
                                     log4js.getLogger(files[i].slice(
                                         0,
@@ -107,13 +105,13 @@ db
                             // Start web socket server
                             function onclose() {}
                             function onconnection(ws) {
-                              ws.on('message', function(raw) {
+                              ws.on("message", function(raw) {
                                 try {
-                                  data = JSON.parse(raw.substr(32));
+                                  var data = JSON.parse(raw.substr(32));
                                   data.session = raw.substr(0, 32);
                                   if (handles[data.type]) {
                                     var d = domain.create();
-                                    d.on('error', function(err) {
+                                    d.on("error", function(err) {
                                       logger.error(err.stack);
                                       ws.send(JSON.stringify({
                                         "type" : data.type,
@@ -130,7 +128,7 @@ db
                                             var req = new reqres.Request(ws,
                                                 data, db);
                                             var res = new reqres.Response(ws,
-                                                data)
+                                                data);
                                             req.session = session;
                                             res.session = session;
                                             if (req.data.type == "openSession")
@@ -150,11 +148,11 @@ db
                                 }
                               });
                             }
-                            var SocketIOServer = require('socket.io')(8005);
-                            SocketIOServer.on('connection', onconnection);
-                            SocketIOServer.on('close', onclose);
+                            var SocketIOServer = require("socket.io")(8005);
+                            SocketIOServer.on("connection", onconnection);
+                            SocketIOServer.on("close", onclose);
                             logger.info("Server ready");
-                          })
+                          });
                 });
           });
     });
