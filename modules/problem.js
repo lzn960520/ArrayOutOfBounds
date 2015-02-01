@@ -126,7 +126,7 @@ module.exports = function(env, logger) {
                   "description" : req.data.description,
                   "input" : req.data.input,
                   "output" : req.data.output,
-                  "pid" : newpid,
+                  "pid" : newpid.toString(),
                   "num_case" : req.data.num_case,
                   "type" : req.data.problem_type
                 }, {
