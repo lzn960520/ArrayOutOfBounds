@@ -107,11 +107,23 @@ app.controller("single_problem_ctrl", [
   "ui",
   function($scope, $location, $routeParams, backend, ui) {
     $scope.problem = {
-      "name" : "test",
-      "description" : $routeParams.id,
-      "input" : "input",
-      "output" : "output"
+      "name" : "Loading",
+      "description" : "",
+      "input" : "",
+      "output" : ""
     }
+    backend.getProblem($routeParams.id, function(data) {
+      if (data.success) {
+        $scope.$apply(function() {
+          $scope.problem.name = data.name;
+          $scope.problem.description = data.description;
+          $scope.problem.input = data.input;
+          $scope.problem.output = data.output;
+        })
+      } else {
+        ui.deleteTab("problem/" + $routeParams.id);
+      }
+    });
     _stage = 'show';
     $scope.stage = function(stage) {
       if (stage)

@@ -323,6 +323,14 @@ app
                       }), callback);
                     });
                   },
+                  "getProblem" : function(pid, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "getProblem",
+                        "pid" : pid
+                      }), callback);
+                    });
+                  },
                   "submitCode" : function(code, callback) {
                     waitForReady(function() {
                       send(JSON.stringify({
