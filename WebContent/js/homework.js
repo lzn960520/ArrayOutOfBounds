@@ -1,12 +1,15 @@
-app.controller("list_homework_ctrl", [ "$scope", "$location", "ui",
-  function($scope, $location, ui) {
-    $scope.homeworks = [ {
-      id : "CS2010",
-      begintime : new Date(),
-      endtime : new Date(),
-      score : 60,
-      fullscore : 100
-    } ];
+app.controller("list_homework_ctrl", [ "$scope", "$location", "ui", "backend",
+  function($scope, $location, ui, backend) {
+    $scope.homeworks = [];
+    backend.getHomeworks(function(data) {
+      if (data.success) {
+        $scope.$apply(function() {
+          $scope.homeworks = data.homeworks;
+        })
+      } else {
+        ui.popup_error("Get homeworks failed: " + data.reason);
+      }
+    })
     $scope.addHomework = function() {
       ui.addTab("New homework", "/homework/add", {
         condition : "loginInfo.role=='teacher'",
@@ -47,10 +50,15 @@ app.controller("single_homework_ctrl", [ "$scope", "$routeParams", "ui",
       $location.path("/problem/" + id);
     }
   } ]);
+
 app.controller("add_homework_ctrl", [
   "$scope",
   "backend",
-  function($scope, backend) {
+  "ui",
+  "$location",
+  function($scope, backend, ui, $location) {
+    $scope.name = "";
+    $scope.description = "";
     $scope.begindate = new Date();
     $scope.enddate = $scope.begindate;
     $scope.begintime = new Date();
@@ -58,7 +66,31 @@ app.controller("add_homework_ctrl", [
         .setMinutes(Math.floor($scope.begintime.getMinutes() / 15) * 15);
     $scope.endtime = $scope.begintime;
     $scope.endtime.setMinutes(0);
+    $scope.problems = "";
+    $scope.doAddHomework = function() {
+      backend.addHomework(
+          $scope.name,
+          $scope.description,
+          $scope.begintime,
+          $scope.endtime,
+          $scope.problems.replace(/\s*/g, "").split(','),
+          function(data) {
+            if (data.success) {
+              ui.popup_noti("Add homework succeeded");
+              $scope.$apply(function() {
+                ui.deleteTab("/homework/add");
+                ui.addTab($scope.name, "/homework/" + data.hid, {
+                  closable : true
+                });
+                $location.path("/homework/" + data.hid);
+              });
+            } else {
+              ui.popup_error("Add homework failed: " + data.reason);
+            }
+          });
+    }
   } ]);
+
 app.config([ "$routeProvider", function($routeProvider) {
   $routeProvider.when("/homeworks", {
     templateUrl : "views/homework-list.html",

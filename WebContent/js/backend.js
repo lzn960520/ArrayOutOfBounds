@@ -143,22 +143,26 @@ app
               "username" : $.cookie("username") || "",
               "role" : $.cookie("role") || "nologin",
             }
+            function checkAndReconnect() {
+              if (!ready) {
+                uiProvider.popup_error("Connection timeout");
+                setTimeout(connect, 500);
+              }
+            }
             function connect() {
               working = false;
               ready = false;
-              socket = io("http://" + location.hostname + ":" + port, {
+              socket = io("/", {
                 reconnection : false,
-                connect_timeout : 5000
+                connect_timeout : 5000,
+                forceNew : true
               });
               socket.on('connect', function() {
                 ready = true;
                 if (!working)
                   work();
               });
-              socket.on('connect_error', function() {
-                uiProvider.popup_error("Connection timeout");
-                setTimeout(connect, 500);
-              })
+              setTimeout(checkAndReconnect, 5000);
               socket.on('disconnect', function() {
                 ready = false;
                 working = false;
@@ -358,6 +362,26 @@ app
                         "upload_session" : session,
                         "num_case" : num_case,
                         "problem_type" : type
+                      }), callback);
+                    });
+                  },
+                  "addHomework" : function(name, desc, begintime, endtime,
+                      problems, callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "addHomework",
+                        "name" : name,
+                        "description" : desc,
+                        "begintime" : begintime,
+                        "endtime" : endtime,
+                        "problems" : problems
+                      }), callback);
+                    });
+                  },
+                  "getHomeworks" : function(callback) {
+                    waitForReady(function() {
+                      send(JSON.stringify({
+                        "type" : "getHomeworks"
                       }), callback);
                     });
                   }
