@@ -19,6 +19,8 @@ role_teacher.prototype.granted = function(req) {
     case "register" :
     case "logout" :
     case "getStudents" :
+    case "addHomework" :
+    case "getHomeworks" :
       return true;
     default :
       throw new Error("Undefined message permission");

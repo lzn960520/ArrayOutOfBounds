@@ -45,11 +45,13 @@ db
         return;
       }
       logger.info("Database ready");
-      sessionStore = new sessionStore(db, "session",
+      sessionStore = new sessionStore(
+          db,
+          "session",
           function() {
             logger.info("Session storage ready");
-            permissionManager = new permissionManager(log4js
-                .getLogger("permMan"),
+            permissionManager = new permissionManager(
+                log4js.getLogger("permMan"),
                 function() {
                   logger.info("Permission manager ready");
                   // Environment for modules
@@ -74,7 +76,8 @@ db
                     "registerDefaultSession" : function(defaults) {
                       sessionStore.registerDefaultSession(defaults);
                     },
-                    modules : {}
+                    "modules" : {},
+                    "db" : db
                   };
 
                   // Load modules
@@ -92,12 +95,9 @@ db
                                     files[i].slice(0, files[i].length - 3));
                                 env.modules[files[i].slice(
                                     0,
-                                    files[i].length - 3)] = new (require(
-                                    "./modules/" + files[i]))(
-                                    env,
-                                    log4js.getLogger(files[i].slice(
-                                        0,
-                                        files[i].length - 3)));
+                                    files[i].length - 3)] = new (require("./modules/" +
+                                    files[i]))(env, log4js.getLogger(files[i]
+                                    .slice(0, files[i].length - 3)));
                                 logger.info("Loaded " +
                                     files[i].slice(0, files[i].length - 3));
                               }
@@ -140,15 +140,26 @@ db
                                               handles[data.type](req, res);
                                           });
                                     });
-                                  } else
+                                  } else {
                                     logger.warn("Unknown message " +
                                         JSON.stringify(data));
+                                    ws.send(JSON.stringify({
+                                      "type" : data.type,
+                                      "success" : false,
+                                      "reason" : "Unknown operation"
+                                    }));
+                                  }
                                 } catch (err) {
                                   logger.error(err.stack);
+                                  ws.send(JSON.stringify({
+                                    "type" : data.type,
+                                    "success" : false,
+                                    "reason" : "Server crashed"
+                                  }));
                                 }
                               });
                             }
-                            var SocketIOServer = require("socket.io")(8005);
+                            var SocketIOServer = require("socket.io")(805);
                             SocketIOServer.on("connection", onconnection);
                             SocketIOServer.on("close", onclose);
                             logger.info("Server ready");

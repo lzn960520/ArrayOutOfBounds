@@ -15,7 +15,7 @@ module.exports = function(env, logger) {
   }));
   webapp.use(require("connect-multiparty")());
   webapp.post(
-      "/innovenus/OutOfBounds/master/WebContent/uploadcasefile",
+      "/uploadcasefile",
       function(req, res) {
         var session = req.body.session;
         if (typeof session === "undefined" || session === null ||
@@ -26,6 +26,7 @@ module.exports = function(env, logger) {
         var files = req.files.upload;
         if (!isArray(files))
           files = [ files ];
+        logger.debug("Handle file upload: " + files);
         var processed = 0;
         files.forEach(function(file) {
           if (file.name.match(/[1-9][0-9]*.(in|out)/)) {
