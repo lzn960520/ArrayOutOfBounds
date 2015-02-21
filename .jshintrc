@@ -6,5 +6,6 @@
   "quotmark": "double",
   "shadow": "inner",
   "strict": true,
-  "node": true
+  "node": true,
+  "white": true
 }
