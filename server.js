@@ -77,7 +77,15 @@ db
                       sessionStore.registerDefaultSession(defaults);
                     },
                     "modules" : {},
-                    "db" : db
+                    "db" : db,
+                    "require" : function(name) {
+                      if (typeof env.modules[name] === "undefined") {
+                        logger.info("Loading " + name);
+                        env.modules[name] = new (require("./modules/" + name +
+                            ".js"))(env, log4js.getLogger(name));
+                        logger.info("Loaded " + name);
+                      }
+                    }
                   };
 
                   // Load modules
@@ -90,7 +98,10 @@ db
                               return;
                             }
                             for (var i = 0; i < files.length; i++)
-                              if (files[i].slice(-3) == ".js") {
+                              if (files[i].slice(-3) === ".js" &&
+                                  typeof env.modules[files[i].slice(
+                                      0,
+                                      files[i].length - 3)] === "undefined") {
                                 logger.info("Loading " +
                                     files[i].slice(0, files[i].length - 3));
                                 env.modules[files[i].slice(

@@ -1,6 +1,6 @@
 "use strict";
 
-module.exports = function(env, logger) {
+module.exports = function(env) {
   function handleGetStudents(req, res) {
     req.db.collection("users", {
       safe : true,
@@ -78,7 +78,7 @@ module.exports = function(env, logger) {
                 hid : newhid
               });
             });
-          })
+          });
         });
       });
     });
@@ -102,11 +102,9 @@ module.exports = function(env, logger) {
             if (err)
               throw new Error(err);
             docs = docs[0].homeworks;
-            logger.debug(docs);
             env.modules.helper.dereferenceArray(docs, function(err) {
               if (err)
                 throw new Error(err);
-              logger.debug(docs);
               res.success({
                 homeworks : docs
               });

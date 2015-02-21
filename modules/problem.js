@@ -4,6 +4,7 @@ module.exports = function(env, logger) {
   var net = require("net");
   var fs = require("fs");
 
+  env.require("concurrency");
   function findMissingCaseFile(dir, max_case, callback) {
     if (!callback)
       return;
@@ -69,9 +70,10 @@ module.exports = function(env, logger) {
     });
   }
 
+  var addProblemLock = new env.modules.concurrency();
   function handleAddProblem(req, res) {
     if (!req.data.upload_session)
-      res.fail("Bad session");
+      res.fail("Bad upload session");
     else {
       var session = req.data.upload_session;
       findMissingCaseFile(session, req.data.num_case, function(missing) {
@@ -97,20 +99,8 @@ module.exports = function(env, logger) {
               });
               return;
             }
-            collection.count({}, function(err, count) {
-              if (err) {
-                env.modules.helper.rmdir(
-                    __dirname + "/tmp/" + session,
-                    function(err2) {
-                      if (err2)
-                        throw new Error(err2);
-                      throw new Error(err);
-                    });
-                return;
-              }
-              var newpid = count + 1;
-              fs.rename(__dirname + "/tmp/" + session, __dirname + "/problem/" +
-                  newpid, function(err) {
+            addProblemLock.run(function() {
+              collection.count({}, function(err, count) {
                 if (err) {
                   env.modules.helper.rmdir(
                       __dirname + "/tmp/" + session,
@@ -121,29 +111,43 @@ module.exports = function(env, logger) {
                       });
                   return;
                 }
-                collection.insert({
-                  "name" : req.data.name,
-                  "description" : req.data.description,
-                  "input" : req.data.input,
-                  "output" : req.data.output,
-                  "pid" : newpid.toString(),
-                  "num_case" : req.data.num_case,
-                  "type" : req.data.problem_type
-                }, {
-                  safe : true
-                }, function(err) {
+                var newpid = count + 1;
+                fs.rename(__dirname + "/tmp/" + session, __dirname +
+                    "/problem/" + newpid, function(err) {
                   if (err) {
                     env.modules.helper.rmdir(
-                        __dirname + "/problem/" + newpid,
+                        __dirname + "/tmp/" + session,
                         function(err2) {
                           if (err2)
                             throw new Error(err2);
                           throw new Error(err);
                         });
-                  } else
-                    res.success({
-                      pid : newpid
-                    });
+                    return;
+                  }
+                  collection.insert({
+                    "name" : req.data.name,
+                    "description" : req.data.description,
+                    "input" : req.data.input,
+                    "output" : req.data.output,
+                    "pid" : newpid.toString(),
+                    "num_case" : req.data.num_case,
+                    "type" : req.data.problem_type
+                  }, {
+                    safe : true
+                  }, function(err) {
+                    if (err) {
+                      env.modules.helper.rmdir(
+                          __dirname + "/problem/" + newpid,
+                          function(err2) {
+                            if (err2)
+                              throw new Error(err2);
+                            throw new Error(err);
+                          });
+                    } else
+                      res.success({
+                        pid : newpid
+                      });
+                  });
                 });
               });
             });
