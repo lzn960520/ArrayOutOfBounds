@@ -1,15 +1,10 @@
+"use strict";
+
 function toggleSignin() {
   $("#login-div").fadeToggle(300);
 }
 function toggleSignup() {
   $("#reg-div").fadeToggle(300);
-}
-function doLogout() {
-  backend.logout(function(result) {
-    backend.username = result.username;
-    backend.role = result.role;
-    roleChanged();
-  });
 }
 $(function() {
   $("#login-div").click(function(e) {
@@ -30,7 +25,7 @@ $(function() {
     $("#login-div").fadeOut(300);
     e.stopPropagation();
   });
-  $(document).click(function(e) {
+  $(document).click(function() {
     $("#login-div").fadeOut(300);
     $("#reg-div").fadeOut(300);
   });
@@ -48,7 +43,7 @@ app.controller("login_ctrl", [ "$scope", "backend", "ui",
         }
       });
       $("#login-div").fadeOut(300);
-    }
+    };
     $scope.register = function() {
       if ($scope.password != $scope.password2) {
         ui.popup_noti("The passwords you entered must be the same");
@@ -62,5 +57,5 @@ app.controller("login_ctrl", [ "$scope", "backend", "ui",
         }
       });
       $("#reg-div").fadeOut(300);
-    }
+    };
   } ]);

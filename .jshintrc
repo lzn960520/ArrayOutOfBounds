@@ -1,0 +1,11 @@
+{
+  "undef": true,
+  "unused": true,
+  "latedef": true,
+  "noarg": true,
+  "quotmark": "double",
+  "shadow": "inner",
+  "strict": true,
+  "white": true,
+  "predef": [ "io", "$", "angular", "document", "setTimeout" ]
+}

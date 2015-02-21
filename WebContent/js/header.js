@@ -1,3 +1,5 @@
+"use strict";
+
 app.controller("header_ctrl", [ "$scope", "$location", "backend", "ui",
   function($scope, $location, backend, ui) {
     $scope.logout = function() {
@@ -7,6 +9,6 @@ app.controller("header_ctrl", [ "$scope", "$location", "backend", "ui",
         } else {
           ui.popup_error("Logout failed: " + result.reason);
         }
-      })
-    }
+      });
+    };
   } ]);

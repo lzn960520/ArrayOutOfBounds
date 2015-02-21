@@ -1,9 +1,11 @@
-function doAddContest() {
+"use strict";
+
+/*function doAddContest() {
   backend.addContest(
       $("#add-contest-modal #name").val(),
       $("#add-contest-modal #begintime").datetimepicker('getDate'),
       $("#add-contest-modal #endtime").datetimepicker('getDate'),
-      $("#add-contest-modal #problems").val().replace(/\s*/g, "").split(','),
+      $("#add-contest-modal #problems").val().replace(/\s\*\/g, "").split(','),
       function(result) {
         if (result.success) {
           popup_noti("Add contest successfully");
@@ -38,7 +40,7 @@ function doGetContests() {
               result.reason + "</span>");
         }
       });
-}
+}*/
 
 app.controller("add_contest_ctrl", [
   "$scope",
@@ -67,9 +69,9 @@ app.config([ "$routeProvider", function($routeProvider) {
   }).when("/contests", {
     templateUrl : "views/contest-list.html",
     controller : "list_contest_ctrl"
-  })
+  });
 } ]);
 app.config([ "uiProvider", function(ui) {
   ui.addTab("Welcome", "/welcome");
   ui.addTab("Contests", "/contests");
-} ])
+} ]);

@@ -1,3 +1,5 @@
+"use strict";
+
 app.controller("list_student_ctrl", [ "$scope", "$location", "ui", "backend",
   function($scope, $location, ui, backend) {
     $scope.students = [];
@@ -20,4 +22,4 @@ app.config([ "uiProvider", function(ui) {
   ui.addTab("Students", "/students", {
     condition : "loginInfo.role=='teacher'"
   });
-} ])
+} ]);

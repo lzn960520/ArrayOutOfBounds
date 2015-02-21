@@ -1,3 +1,5 @@
+"use strict";
+
 app.controller("list_homework_ctrl", [ "$scope", "$location", "ui", "backend",
   function($scope, $location, ui, backend) {
     $scope.homeworks = [];
@@ -5,25 +7,25 @@ app.controller("list_homework_ctrl", [ "$scope", "$location", "ui", "backend",
       if (data.success) {
         $scope.$apply(function() {
           $scope.homeworks = data.homeworks;
-        })
+        });
       } else {
         ui.popup_error("Get homeworks failed: " + data.reason);
       }
-    })
+    });
     $scope.addHomework = function() {
       ui.addTab("New homework", "/homework/add", {
         condition : "loginInfo.role=='teacher'",
         closable : true
       });
       $location.path("/homework/add");
-    }
+    };
     $scope.openHomework = function(id) {
       ui.addTab(id, "/homework/" + id, {
         condition : "loginInfo.role=='student' || loginInfo.role=='teacher'",
         closable : true
       });
       $location.path("/homework/" + id);
-    }
+    };
   } ]);
 app.controller("single_homework_ctrl", [ "$scope", "$routeParams", "ui",
   "$location", function($scope, $routeParams, ui, $location) {
@@ -48,7 +50,7 @@ app.controller("single_homework_ctrl", [ "$scope", "$routeParams", "ui",
         closable : true
       });
       $location.path("/problem/" + id);
-    }
+    };
   } ]);
 
 app.controller("add_homework_ctrl", [
@@ -73,7 +75,7 @@ app.controller("add_homework_ctrl", [
           $scope.description,
           $scope.begintime,
           $scope.endtime,
-          $scope.problems.replace(/\s*/g, "").split(','),
+          $scope.problems.replace(/\s*/g, "").split(","),
           function(data) {
             if (data.success) {
               ui.popup_noti("Add homework succeeded");
@@ -88,7 +90,7 @@ app.controller("add_homework_ctrl", [
               ui.popup_error("Add homework failed: " + data.reason);
             }
           });
-    }
+    };
   } ]);
 
 app.config([ "$routeProvider", function($routeProvider) {
@@ -101,7 +103,7 @@ app.config([ "$routeProvider", function($routeProvider) {
   }).when("/homework/:id", {
     templateUrl : "views/homework-detail.html",
     controller : "single_homework_ctrl"
-  })
+  });
 } ]);
 app.config([ "uiProvider", function(ui) {
   ui.addTab("Homeworks", "/homeworks", {

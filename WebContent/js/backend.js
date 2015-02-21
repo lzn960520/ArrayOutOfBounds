@@ -1,129 +1,41 @@
-var port = 8005;
-var backend = null;
-$(function() {
-  backend = function() {
-    var self = this;
-    function work() {
-      if (queue.length == 0) {
-        working = false;
-        return;
-      } else {
-        working = true;
-        if (queue[0].data)
-          socket.send(queue[0].data);
-        else {
-          queue[0].callback();
-          queue.shift();
-          work();
-        }
-      }
-    }
-    self.login = function(username, password, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "login",
-          "session" : self.session,
-          "username" : username,
-          "password" : password
-        }), callback);
-      });
-    }
-    self.register = function(username, password, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "register",
-          "session" : self.session,
-          "username" : username,
-          "password" : password
-        }), callback);
-      });
-    }
-    self.logout = function(callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "logout",
-          "session" : self.session,
-        }), callback);
-      });
-    }
-    self.getProblem = function(pid, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "getProblem",
-          "session" : self.session,
-          "pid" : pid
-        }), callback);
-      });
-    }
-    self.addProblem = function(name, desc, input, output, session, num_case,
-        type, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "addProblem",
-          "session" : self.session,
-          "name" : name,
-          "description" : desc,
-          "input" : input,
-          "output" : output,
-          "upload_session" : session,
-          "num_case" : num_case,
-          "problem_type" : type
-        }), callback);
-      });
-    }
-    self.editProblem = function(pid, name, desc, input, output, session,
-        num_case, type, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "editProblem",
-          "session" : self.session,
-          "pid" : pid,
-          "name" : name,
-          "description" : desc,
-          "input" : input,
-          "output" : output,
-          "upload_session" : session,
-          "num_case" : num_case,
-          "problem_type" : type
-        }), callback);
-      });
-    }
-    self.removeProblem = function(pid, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "removeProblem",
-          "session" : self.session,
-          "pid" : pid
-        }), callback);
-      });
-    }
-    self.addContest = function(name, begin, end, pids, callback) {
-      begin.setSeconds(0);
-      end.setSeconds(0);
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "addContest",
-          "session" : self.session,
-          "name" : name,
-          "begin" : begin,
-          "end" : end,
-          "problems" : pids
-        }), callback);
-      });
-    }
-    self.submitCode = function(username, pid, code, callback) {
-      waitForReady(function() {
-        send(JSON.stringify({
-          "type" : "submitCode",
-          "session" : self.session,
-          "code" : code,
-          "pid" : pid
-        }), callback);
-      });
-    }
-    return this;
-  }();
-});
+"use strict";
+
+/*
+ * var backend = null; $(function() { backend = new function() { var self =
+ * this; function work() { if (queue.length == 0) { working = false; return; }
+ * else { working = true; if (queue[0].data) socket.send(queue[0].data); else {
+ * queue[0].callback(); queue.shift(); work(); } } } self.login =
+ * function(username, password, callback) { waitForReady(function() {
+ * send(JSON.stringify({ "type" : "login", "session" : self.session, "username" :
+ * username, "password" : password }), callback); }); } self.register =
+ * function(username, password, callback) { waitForReady(function() {
+ * send(JSON.stringify({ "type" : "register", "session" : self.session,
+ * "username" : username, "password" : password }), callback); }); } self.logout =
+ * function(callback) { waitForReady(function() { send(JSON.stringify({ "type" :
+ * "logout", "session" : self.session, }), callback); }); } self.getProblem =
+ * function(pid, callback) { waitForReady(function() { send(JSON.stringify({
+ * "type" : "getProblem", "session" : self.session, "pid" : pid }), callback);
+ * }); } self.addProblem = function(name, desc, input, output, session,
+ * num_case, type, callback) { waitForReady(function() { send(JSON.stringify({
+ * "type" : "addProblem", "session" : self.session, "name" : name, "description" :
+ * desc, "input" : input, "output" : output, "upload_session" : session,
+ * "num_case" : num_case, "problem_type" : type }), callback); }); }
+ * self.editProblem = function(pid, name, desc, input, output, session,
+ * num_case, type, callback) { waitForReady(function() { send(JSON.stringify({
+ * "type" : "editProblem", "session" : self.session, "pid" : pid, "name" : name,
+ * "description" : desc, "input" : input, "output" : output, "upload_session" :
+ * session, "num_case" : num_case, "problem_type" : type }), callback); }); }
+ * self.removeProblem = function(pid, callback) { waitForReady(function() {
+ * send(JSON.stringify({ "type" : "removeProblem", "session" : self.session,
+ * "pid" : pid }), callback); }); } self.addContest = function(name, begin, end,
+ * pids, callback) { begin.setSeconds(0); end.setSeconds(0);
+ * waitForReady(function() { send(JSON.stringify({ "type" : "addContest",
+ * "session" : self.session, "name" : name, "begin" : begin, "end" : end,
+ * "problems" : pids }), callback); }); } self.submitCode = function(username,
+ * pid, code, callback) { waitForReady(function() { send(JSON.stringify({ "type" :
+ * "submitCode", "session" : self.session, "code" : code, "pid" : pid }),
+ * callback); }); } return this; }(); });
+ */
 app
     .provider(
         "backend",
@@ -133,7 +45,6 @@ app
             var socket = null;
             var queue = [];
             var working = false;
-            var waiting = null;
             var self = this;
             var ready = false;
             var session_opened = false;
@@ -142,7 +53,7 @@ app
                   "00000000000000000000000000000000",
               "username" : $.cookie("username") || "",
               "role" : $.cookie("role") || "nologin",
-            }
+            };
             function checkAndReconnect() {
               if (!ready) {
                 uiProvider.popup_error("Connection timeout");
@@ -157,19 +68,19 @@ app
                 connect_timeout : 5000,
                 forceNew : true
               });
-              socket.on('connect', function() {
+              socket.on("connect", function() {
                 ready = true;
                 if (!working)
                   work();
               });
               setTimeout(checkAndReconnect, 5000);
-              socket.on('disconnect', function() {
+              socket.on("disconnect", function() {
                 ready = false;
                 working = false;
                 connect();
               });
-              socket.on('message', function(data) {
-                var data = JSON.parse(data);
+              socket.on("message", function(data) {
+                data = JSON.parse(data);
                 switch (data.type) {
                   case "error" :
                     uiProvider.popup_error("Error: " + data.content);
@@ -191,13 +102,13 @@ app
               });
             }
             function work() {
-              if (queue.length == 0) {
+              if (queue.length === 0) {
                 working = false;
                 return;
               } else {
                 working = true;
                 if (queue[0].data)
-                  if (socket != null)
+                  if (socket !== null)
                     socket.send(self.loginInfo.session + queue[0].data);
                   else {
                     if (queue[0].callback)
@@ -247,18 +158,13 @@ app
                       $rootScope.loginInfo.username = result.username;
                       $rootScope.loginInfo.role = result.role;
                     });
-                  })
+                  });
                 }
                 $rootScope.loginInfo = this.loginInfo;
                 $rootScope.$watch("loginInfo", function() {
                   $.cookie("session", $rootScope.loginInfo.session);
-                  if ($rootScope.loginInfo.username == "") {
-                    $.removeCookie("username");
-                    $.removeCookie("role");
-                  } else {
-                    $.cookie("username", $rootScope.loginInfo.username);
-                    $.cookie("role", $rootScope.loginInfo.role);
-                  }
+                  $.cookie("username", $rootScope.loginInfo.username);
+                  $.cookie("role", $rootScope.loginInfo.role);
                 }, true);
                 return {
                   "doLogin" : function(username, password, callback) {
@@ -385,6 +291,6 @@ app
                       }), callback);
                     });
                   }
-                }
+                };
               } ];
           } ]);
