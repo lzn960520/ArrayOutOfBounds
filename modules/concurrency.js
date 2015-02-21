@@ -3,18 +3,17 @@
 module.exports = function() {
   return function() {
     var queue = [];
-    function work() {
-      queue[0]();
+    this.exit = function() {
       queue.shift();
       if (queue.length !== 0)
-        work();
-    }
+        setTimeout(0, queue[0]);
+    };
     this.run = function(callback) {
       if (queue.length !== 0) {
         queue.push(callback);
       } else {
         queue.push(callback);
-        work();
+        queue[0]();
       }
     };
   };

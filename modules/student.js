@@ -1,6 +1,8 @@
 "use strict";
 
 module.exports = function(env) {
+  env.require("concurrency");
+
   function handleGetStudents(req, res) {
     req.db.collection("users", {
       safe : true,
@@ -21,6 +23,7 @@ module.exports = function(env) {
     });
   }
 
+  var addHomeworkLock = new env.modules.concurrency();
   function handleAddHomework(req, res) {
     req.db.collection("homeworks", {
       safe : true,
@@ -28,43 +31,34 @@ module.exports = function(env) {
     }, function(err, homeworks) {
       if (err)
         throw new Error(err);
-      homeworks.count({}, function(err, count) {
-        if (err)
-          throw new Error(err);
-        var newhid = (count + 1).toString();
-        homeworks.insert({
-          "name" : req.data.name,
-          "description" : req.data.description,
-          "begintime" : req.data.begintime,
-          "endtime" : req.data.endtime,
-          "problems" : req.data.problems,
-          "hid" : newhid
-        }, function(err, result) {
-          if (err)
+      addHomeworkLock.run(function() {
+        homeworks.find({}, {
+          _id : 0,
+          hid : 1
+        }).sort({
+          hid : -1
+        }).limit(1).toArray(function(err, docs) {
+          if (err) {
+            addHomeworkLock.exit();
             throw new Error(err);
-          req.db.collection("users", {
-            safe : true,
-            strict : true
-          }, function(err, users) {
+          }
+          var newhid = (Number(docs[0]) + 1).toString();
+          homeworks.insert({
+            "name" : req.data.name,
+            "description" : req.data.description,
+            "begintime" : req.data.begintime,
+            "endtime" : req.data.endtime,
+            "problems" : req.data.problems,
+            "hid" : newhid
+          }, function(err, result) {
+            addHomeworkLock.exit();
             if (err) {
-              homeworks.remove({
-                _id : result.ops[0]._id
-              }, function(err2) {
-                if (err2)
-                  throw new Error(err2);
-                throw new Error(err);
-              });
+              throw new Error(err);
             }
-            users.update({
-              username : req.session.username
-            }, {
-              $addToSet : {
-                "homeworks" : {
-                  $ref : "homeworks",
-                  $id : result.ops[0]._id
-                }
-              }
-            }, function(err) {
+            req.db.collection("users", {
+              safe : true,
+              strict : true
+            }, function(err, users) {
               if (err) {
                 homeworks.remove({
                   _id : result.ops[0]._id
@@ -74,8 +68,28 @@ module.exports = function(env) {
                   throw new Error(err);
                 });
               }
-              res.success({
-                hid : newhid
+              users.update({
+                username : req.session.username
+              }, {
+                $addToSet : {
+                  "homeworks" : {
+                    $ref : "homeworks",
+                    $id : result.ops[0]._id
+                  }
+                }
+              }, function(err) {
+                if (err) {
+                  homeworks.remove({
+                    _id : result.ops[0]._id
+                  }, function(err2) {
+                    if (err2)
+                      throw new Error(err2);
+                    throw new Error(err);
+                  });
+                }
+                res.success({
+                  hid : newhid
+                });
               });
             });
           });
