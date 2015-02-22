@@ -9,6 +9,7 @@
 		"body-parser": "*",
 		"connect-multiparty": "*",
 		"socket.io": ">= 1.1.0",
-		"log4js": "*"
+		"log4js": "*",
+		"eventproxy": "*"
 	}
 }

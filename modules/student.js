@@ -133,4 +133,31 @@ module.exports = function(env) {
   env.registerHandler("getStudents", handleGetStudents);
   env.registerHandler("addHomework", handleAddHomework);
   env.registerHandler("getHomeworks", handleGetHomeworks);
+  env.publishDb("homeworks", function(callback) {
+    env.db.createCollection("homeworks", function(err) {
+      if (err) {
+        throw new Error(err);
+      }
+      env.db.collection("homeworks", {
+        safe : true,
+        strict : true
+      }, function(err, collection) {
+        if (err) {
+          throw new Error(err);
+        }
+        collection.ensureIndex({
+          hid : 1
+        }, {
+          unique : true
+        }, function(err) {
+          if (err) {
+            throw new Error(err);
+          }
+          callback();
+        });
+      });
+    });
+  });
+
+  env.events.emitLater("ModuleReady", "student");
 };

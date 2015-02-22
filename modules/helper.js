@@ -44,5 +44,6 @@ module.exports = function(env) {
     for (var i = 0; i < len; i++)
       helper(i);
   };
-  return this;
+  
+  env.events.emitLater("ModuleReady", "helper");
 };

@@ -75,4 +75,32 @@ module.exports = function(env) {
   env.registerHandler("getContest", handleGetContest);
   env.registerHandler("getContests", handleGetContests);
   env.registerHandler("addContest", handleAddContest);
+
+  env.publishDb("contests", function(callback) {
+    env.db.createCollection("contests", function(err) {
+      if (err) {
+        throw new Error(err);
+      }
+      env.db.collection("contests", {
+        safe : true,
+        strict : true
+      }, function(err, collection) {
+        if (err) {
+          throw new Error(err);
+        }
+        collection.ensureIndex({
+          cid : 1
+        }, {
+          unique : true
+        }, function(err) {
+          if (err) {
+            throw new Error(err);
+          }
+          callback();
+        });
+      });
+    });
+  });
+  
+  env.events.emitLater("ModuleReady", "contest");
 };

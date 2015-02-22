@@ -3,6 +3,19 @@
 module.exports = function(env, logger) {
   var net = require("net");
   var fs = require("fs");
+  var self = this;
+  self.collection = null;
+
+  try {
+    fs.statSync(__dirname + "/tmp");
+  } catch (e) {
+    fs.mkdirSync(__dirname + "/tmp");
+  }
+  try {
+    fs.statSync(__dirname + "/problem");
+  } catch (e) {
+    fs.mkdirSync(__dirname + "/problem");
+  }
 
   env.require("concurrency");
   function findMissingCaseFile(dir, max_case, callback) {
@@ -28,44 +41,30 @@ module.exports = function(env, logger) {
   this.findMissingCaseFile = findMissingCaseFile;
 
   function handleGetProblem(req, res) {
-    req.db.collection("problems", {
-      safe : true,
-      strict : true
-    }, function(err, collection) {
+    self.collection.find({
+      pid : req.data.pid
+    }, {
+      "_id" : 0,
+      "num_cases" : 0
+    }).toArray(function(err, docs) {
       if (err)
         throw new Error(err);
-      collection.find({
-        pid : req.data.pid
-      }, {
-        "_id" : 0,
-        "num_cases" : 0
-      }).toArray(function(err, docs) {
-        if (err)
-          throw new Error(err);
-        var thisproblem = docs[0];
-        res.success(thisproblem);
-      });
+      var thisproblem = docs[0];
+      res.success(thisproblem);
     });
   }
 
   function handleGetProblems(req, res) {
-    req.db.collection("problems", {
-      safe : true,
-      strict : true
-    }, function(err, collection) {
+    self.collection.find({}, {
+      "name" : 1,
+      "pid" : 1,
+      "_id" : 0
+    }).toArray(function(err, docs) {
       if (err)
         throw new Error(err);
-      collection.find({}, {
-        "name" : 1,
-        "pid" : 1,
-        "_id" : 0
-      }).toArray(function(err, docs) {
-        if (err)
-          throw new Error(err);
-        res.success({
-          "problems" : docs,
-          "length" : docs.length
-        });
+      res.success({
+        "problems" : docs,
+        "length" : docs.length
       });
     });
   }
@@ -86,27 +85,30 @@ module.exports = function(env, logger) {
                 res.fail("Missing test case " + missing);
               });
         } else {
-          req.db.collection("problems", {
-            safe : true,
-            strict : true
-          }, function(err, collection) {
-            if (err) {
-              env.modules.helper.rmdir(__dirname + "/tmp/" + session, function(
-                  err2) {
-                if (err2)
-                  throw new Error(err2);
-                throw new Error(err);
-              });
-              return;
-            }
-            addProblemLock.run(function() {
-              collection.find({}, {
-                _id : 0,
-                pid : 1
-              }).sort({
-                pid : -1
-              }).limit(1).toArray(
-                  function(err, docs) {
+          addProblemLock.run(function() {
+            self.collection.find({}, {
+              _id : 0,
+              pid : 1
+            }).sort({
+              pid : -1
+            }).limit(1).toArray(
+                function(err, docs) {
+                  if (err) {
+                    addProblemLock.exit();
+                    env.modules.helper.rmdir(
+                        __dirname + "/tmp/" + session,
+                        function(err2) {
+                          if (err2)
+                            throw new Error(err2);
+                          throw new Error(err);
+                        });
+                    return;
+                  }
+                  var newpid = "1";
+                  if (docs[0])
+                    newpid = (Number(docs[0].pid) + 1).toString();
+                  fs.rename(__dirname + "/tmp/" + session, __dirname +
+                      "/problem/" + newpid, function(err) {
                     if (err) {
                       addProblemLock.exit();
                       env.modules.helper.rmdir(
@@ -118,47 +120,32 @@ module.exports = function(env, logger) {
                           });
                       return;
                     }
-                    var newpid = (Number(docs[0].pid) + 1).toString();
-                    fs.rename(__dirname + "/tmp/" + session, __dirname +
-                        "/problem/" + newpid, function(err) {
+                    self.collection.insert({
+                      "name" : req.data.name,
+                      "description" : req.data.description,
+                      "input" : req.data.input,
+                      "output" : req.data.output,
+                      "pid" : newpid.toString(),
+                      "num_case" : req.data.num_case,
+                      "type" : req.data.problem_type
+                    }, {
+                      safe : true
+                    }, function(err) {
+                      addProblemLock.exit();
                       if (err) {
-                        addProblemLock.exit();
-                        env.modules.helper.rmdir(
-                            __dirname + "/tmp/" + session,
-                            function(err2) {
-                              if (err2)
-                                throw new Error(err2);
-                              throw new Error(err);
-                            });
-                        return;
-                      }
-                      collection.insert({
-                        "name" : req.data.name,
-                        "description" : req.data.description,
-                        "input" : req.data.input,
-                        "output" : req.data.output,
-                        "pid" : newpid.toString(),
-                        "num_case" : req.data.num_case,
-                        "type" : req.data.problem_type
-                      }, {
-                        safe : true
-                      }, function(err) {
-                        addProblemLock.exit();
-                        if (err) {
-                          env.modules.helper.rmdir(__dirname + "/problem/" +
-                              newpid, function(err2) {
-                            if (err2)
-                              throw new Error(err2);
-                            throw new Error(err);
-                          });
-                        } else
-                          res.success({
-                            pid : newpid
-                          });
-                      });
+                        env.modules.helper.rmdir(__dirname + "/problem/" +
+                            newpid, function(err2) {
+                          if (err2)
+                            throw new Error(err2);
+                          throw new Error(err);
+                        });
+                      } else
+                        res.success({
+                          pid : newpid
+                        });
                     });
                   });
-            });
+                });
           });
         }
       });
@@ -168,29 +155,22 @@ module.exports = function(env, logger) {
   function handleEditProblem(req, res) {
     var session = req.data.upload_session;
     if (!session) {
-      req.db.collection("problems", {
-        safe : true,
-        strict : true
-      }, function(err, collection) {
+      self.collection.update({
+        "pid" : parseInt(req.data.pid)
+      }, {
+        $set : {
+          "name" : req.data.name,
+          "description" : req.data.description,
+          "input" : req.data.input,
+          "output" : req.data.output,
+          "problem_type" : req.data.problem_type
+        }
+      }, {
+        safe : true
+      }, function(err) {
         if (err)
           throw new Error(err);
-        collection.update({
-          "pid" : parseInt(req.data.pid)
-        }, {
-          $set : {
-            "name" : req.data.name,
-            "description" : req.data.description,
-            "input" : req.data.input,
-            "output" : req.data.output,
-            "problem_type" : req.data.problem_type
-          }
-        }, {
-          safe : true
-        }, function(err) {
-          if (err)
-            throw new Error(err);
-          res.success();
-        });
+        res.success();
       });
     } else {
       findMissingCaseFile(session, req.data.num_case, function(missing) {
@@ -228,30 +208,23 @@ module.exports = function(env, logger) {
                         });
                     return;
                   }
-                  req.db.collection("problems", {
-                    safe : true,
-                    strict : true
-                  }, function(err, collection) {
+                  self.collection.update({
+                    "pid" : parseInt(req.data.pid)
+                  }, {
+                    $set : {
+                      "name" : req.data.name,
+                      "description" : req.data.description,
+                      "input" : req.data.input,
+                      "output" : req.data.output,
+                      "problem_type" : req.data.problem_type,
+                      "num_case" : req.data.num_case
+                    }
+                  }, {
+                    safe : true
+                  }, function(err) {
                     if (err)
                       throw new Error(err);
-                    collection.update({
-                      "pid" : parseInt(req.data.pid)
-                    }, {
-                      $set : {
-                        "name" : req.data.name,
-                        "description" : req.data.description,
-                        "input" : req.data.input,
-                        "output" : req.data.output,
-                        "problem_type" : req.data.problem_type,
-                        "num_case" : req.data.num_case
-                      }
-                    }, {
-                      safe : true
-                    }, function(err) {
-                      if (err)
-                        throw new Error(err);
-                      res.success();
-                    });
+                    res.success();
                   });
                 });
               });
@@ -261,28 +234,21 @@ module.exports = function(env, logger) {
   }
 
   function handleRemoveProblem(req, res) {
-    req.db.collection("problems", {
+    self.collection.remove({
+      pid : req.data.pid
+    }, {
       safe : true,
       strict : true
-    }, function(err, collection) {
+    }, function(err) {
       if (err)
         throw new Error(err);
-      collection.remove({
-        pid : req.data.pid
-      }, {
-        safe : true,
-        strict : true
-      }, function(err) {
-        if (err)
-          throw new Error(err);
-        env.modules.helper.rmdir(
-            __dirname + "/problem/" + req.data.pid,
-            function(err) {
-              if (err)
-                throw new Error(err);
-              res.success();
-            });
-      });
+      env.modules.helper.rmdir(
+          __dirname + "/problem/" + req.data.pid,
+          function(err) {
+            if (err)
+              throw new Error(err);
+            res.success();
+          });
     });
   }
 
@@ -293,53 +259,46 @@ module.exports = function(env, logger) {
     fs.writeFile(filename, req.data.code, function(err) {
       if (err)
         throw new Error(err);
-      req.db.collection("problems", {
-        safe : true,
-        strict : true
-      }, function(err, collection) {
+      self.collection.find({
+        pid : parseInt(req.data.pid)
+      }, {
+        "num_case" : 1,
+        "_id" : 0
+      }).toArray(function(err, docs) {
         if (err)
           throw new Error(err);
-        collection.find({
-          pid : parseInt(req.data.pid)
-        }, {
-          "num_case" : 1,
-          "_id" : 0
-        }).toArray(function(err, docs) {
-          if (err)
-            throw new Error(err);
-          if (docs.length === 0)
-            res.fail("No such problem");
-          else {
-            var sock = net.connect("/tmp/judged.sock", function() {
-              sock.setEncoding("utf8");
-              sock.on("data", function(data) {
-                var score = 0;
-                var result = "";
-                var i = 0;
-                for (; i < data.length; i++)
-                  if (data[i] != " ")
-                    score = score * 10 + parseInt(data[i]);
-                  else
-                    break;
-                i++;
-                for (; i < data.length; i++)
-                  result += data[i];
-                res.success({
-                  "username" : username,
-                  "pid" : pid,
-                  "score" : score,
-                  "result" : result
-                });
+        if (docs.length === 0)
+          res.fail("No such problem");
+        else {
+          var sock = net.connect("/tmp/judged.sock", function() {
+            sock.setEncoding("utf8");
+            sock.on("data", function(data) {
+              var score = 0;
+              var result = "";
+              var i = 0;
+              for (; i < data.length; i++)
+                if (data[i] != " ")
+                  score = score * 10 + parseInt(data[i]);
+                else
+                  break;
+              i++;
+              for (; i < data.length; i++)
+                result += data[i];
+              res.success({
+                "username" : username,
+                "pid" : pid,
+                "score" : score,
+                "result" : result
               });
-              var str = "0 " + // language
-              filename + " " + // sourcefile
-              __dirname + "/problem/" + req.data.pid + " " + // judge_dir
-              docs[0].num_case + // num_case
-              "\n";
-              sock.write(str);
             });
-          }
-        });
+            var str = "0 " + // language
+            filename + " " + // sourcefile
+            __dirname + "/problem/" + req.data.pid + " " + // judge_dir
+            docs[0].num_case + // num_case
+            "\n";
+            sock.write(str);
+          });
+        }
       });
     });
   }
@@ -362,6 +321,17 @@ module.exports = function(env, logger) {
     });
   }
 
+  env.events.on("DatabaseReady", function() {
+    env.db.collection("problems", {
+      safe : true,
+      strict : true
+    }, function(err, collection) {
+      if (err)
+        throw new Error(err);
+      self.collection = collection;
+      env.events.emit("ModuleReady", "problem");
+    });
+  });
   env.registerHandler("getProblems", handleGetProblems);
   env.registerHandler("getProblem", handleGetProblem);
   env.registerHandler("addProblem", handleAddProblem);
@@ -369,6 +339,29 @@ module.exports = function(env, logger) {
   env.registerHandler("removeProblem", handleRemoveProblem);
   env.registerHandler("submitCode", handleSubmitCode);
   env.registerHandler("getResult", handleGetResult);
-
-  return this;
+  env.publishDb("problems", function(callback) {
+    env.db.createCollection("problems", function(err) {
+      if (err) {
+        throw new Error(err);
+      }
+      env.db.collection("problems", {
+        safe : true,
+        strict : true
+      }, function(err, collection) {
+        if (err) {
+          throw new Error(err);
+        }
+        collection.ensureIndex({
+          pid : 1
+        }, {
+          unique : true
+        }, function(err) {
+          if (err) {
+            throw new Error(err);
+          }
+          callback();
+        });
+      });
+    });
+  });
 };

@@ -1,6 +1,7 @@
 "use strict";
 
-module.exports = function() {
+module.exports = function(env) {
+  env.events.emitLater("ModuleReady", "concurrency");
   return function() {
     var queue = [];
     this.exit = function() {
