@@ -7,5 +7,7 @@
   "shadow": "inner",
   "strict": true,
   "white": true,
-  "predef": [ "io", "$", "angular", "document", "setTimeout" ]
+  "jquery": true,
+  "browser": true,
+  "predef": [ "io", "angular", "app" ]
 }
